@@ -44,10 +44,15 @@
 
     <section>
       <h2>Current Weather</h2>
-      <label>
-        Choose airport:
-        <select id="weather-select"></select>
-      </label>
+      <div class="weather-row">
+        <label>
+          Choose airport:
+          <select id="weather-select"></select>
+        </label>
+        <span style="margin:0 1em;">or</span>
+        <input type="text" id="weather-search-input" placeholder="Search city or airport...">
+        <button id="weather-search-btn">Search</button>
+      </div>
       <button id="weather-btn">Get Weather</button>
       <div id="weather-loading" style="display:none;">Loading...</div>
       <div id="weather-error" style="color:red;"></div>
