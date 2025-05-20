@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Airport Dashboard 3.0</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="container">
+    <h1>Airport Dashboard 3.0</h1>
+    <p>Live airport webcam, radar, and weather in one place.</p>
+
+    <section>
+      <h2>Airport Webcam</h2>
+      <label>
+        Choose airport:
+        <select id="webcam-select"></select>
+      </label>
+      <div id="webcam-area">
+        <iframe id="webcam-frame" width="100%" height="360" frameborder="0" allowfullscreen></iframe>
+      </div>
+      <div id="webcam-search" style="display:none;">
+        <input type="text" id="webcam-custom" placeholder="Enter airport or city...">
+        <button id="webcam-search-btn">Search</button>
+        <div id="webcam-search-link"></div>
+      </div>
+    </section>
+
+    <section>
+      <h2>Live Flight Radar</h2>
+      <iframe
+        title="ADSBexchange Globe"
+        src="https://globe.adsbexchange.com/"
+        width="100%"
+        height="500"
+        style="border:0; border-radius:8px; min-height:400px;"
+        allowfullscreen>
+      </iframe>
+      <p class="source-note">
+        Data source: <a href="https://globe.adsbexchange.com/" target="_blank">ADSBexchange Globe</a>
+      </p>
+    </section>
+
+    <section>
+      <h2>Current Weather</h2>
+      <label>
+        Choose airport:
+        <select id="weather-select"></select>
+      </label>
+      <button id="weather-btn">Get Weather</button>
+      <div id="weather-loading" style="display:none;">Loading...</div>
+      <div id="weather-error" style="color:red;"></div>
+      <div id="weather-result"></div>
+    </section>
+  </div>
+  <script src="app.js"></script>
+</body>
+</html>
