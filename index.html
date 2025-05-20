@@ -40,6 +40,13 @@
         </section>
         <section class="dashboard-card main-tile" id="webcam-card">
           <h2>Live Airport Webcam</h2>
+          <form id="webcam-search-form" class="webcam-search-form">
+            <input type="text" id="webcam-location-input" placeholder="Search airport (name, ICAO, or IATA)" autocomplete="off">
+            <button type="submit">Search</button>
+            <button type="button" id="reset-webcam-btn" title="Reset to selected airport">&#x21bb;</button>
+          </form>
+          <div id="webcam-loading" style="display:none;">Loading...</div>
+          <div id="webcam-error" style="color:red;"></div>
           <iframe id="webcam-frame" width="100%" height="320" frameborder="0" allowfullscreen></iframe>
         </section>
       </div>
@@ -51,6 +58,11 @@
         </div>
         <section class="dashboard-card info-card" id="weather-card">
           <h2>Current Weather</h2>
+          <form id="weather-search-form" class="weather-search-form">
+            <input type="text" id="weather-location-input" placeholder="Search location (city, ICAO, IATA, lat,lon)" autocomplete="off">
+            <button type="submit">Search</button>
+            <button type="button" id="reset-weather-btn" title="Reset to selected airport">&#x21bb;</button>
+          </form>
           <div id="weather-loading" style="display:none;">Loading...</div>
           <div id="weather-error" style="color:red;"></div>
           <div id="weather-result"></div>
