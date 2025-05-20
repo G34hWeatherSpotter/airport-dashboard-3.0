@@ -64,6 +64,18 @@ const sunError = document.getElementById('sun-error');
 const airportSelect = document.getElementById('main-airport-select');
 const displayModeSelect = document.getElementById('display-mode-select');
 
+// Weather search location UI
+const weatherSearchForm = document.getElementById('weather-search-form');
+const weatherLocationInput = document.getElementById('weather-location-input');
+const resetWeatherBtn = document.getElementById('reset-weather-btn');
+
+// Webcam search location UI
+const webcamSearchForm = document.getElementById('webcam-search-form');
+const webcamLocationInput = document.getElementById('webcam-location-input');
+const resetWebcamBtn = document.getElementById('reset-webcam-btn');
+const webcamLoading = document.getElementById('webcam-loading');
+const webcamError = document.getElementById('webcam-error');
+
 // Tabs
 const tabBtns = document.querySelectorAll('.tab-btn');
 const infoCards = document.querySelectorAll('.info-card');
@@ -88,6 +100,9 @@ function populateAirportSelect() {
 }
 populateAirportSelect();
 
+let customWeatherLoc = null; // {lat, lon, label}
+let customWebcamLoc = null; // {query, label, youtubeEmbedUrl}
+
 // Weather icons for Open-Meteo codes
 const weatherIcons = {
   0: "☀️", 1: "🌤️", 2: "⛅", 3: "☁️",
@@ -107,12 +122,22 @@ function pad2(x) {
 }
 
 // --------------- WEATHER --------------- //
-async function fetchWeather(airport) {
+async function fetchWeather(airport, customLoc) {
   weatherLoading.style.display = "";
   weatherError.textContent = "";
   weatherResult.innerHTML = "";
+  let lat, lon, label;
+  if (customLoc) {
+    lat = customLoc.lat;
+    lon = customLoc.lon;
+    label = customLoc.label;
+  } else {
+    lat = airport.lat;
+    lon = airport.lon;
+    label = airport.name;
+  }
   try {
-    const url = `https://api.open-meteo.com/v1/forecast?latitude=${airport.lat}&longitude=${airport.lon}&current_weather=true`;
+    const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current_weather=true`;
     const res = await fetch(url);
     if (!res.ok) throw new Error("Weather not found");
     const data = await res.json();
@@ -123,6 +148,7 @@ async function fetchWeather(airport) {
       <span style="font-size:2em;font-weight:bold;">${cToF(w.temperature)}°F</span><br>
       <span><b>Wind:</b> ${w.windspeed} km/h (${w.winddirection}°)</span><br>
       <span><b>Weather:</b> ${weatherDesc(w.weathercode)}</span>
+      <div style="font-size:.93em;color:#448;margin-top:5px;"><b>Location:</b> ${label}</div>
     `;
   } catch (e) {
     weatherError.textContent = "Weather data unavailable.";
@@ -145,8 +171,6 @@ function weatherDesc(code) {
 }
 
 // --------------- METAR/TAF --------------- //
-// Uses AVWX REST API (public demo endpoint, no auth)
-// https://avwx.rest/api/metar/{station}?format=json (and taf/)
 async function fetchMetarTaf(airport) {
   metarLoading.style.display = "";
   metarError.textContent = "";
@@ -172,7 +196,6 @@ async function fetchMetarTaf(airport) {
 }
 
 // --------------- SUNRISE/SUNSET & TIME --------------- //
-// Sunrise, sunset, and local time via sunrise-sunset.org and worldtimeapi.org
 async function fetchSunTimes(airport) {
   sunLoading.style.display = "";
   sunError.textContent = "";
@@ -187,7 +210,6 @@ async function fetchSunTimes(airport) {
     const sunset = new Date(sunData.results.sunset);
 
     // Local time (from worldtimeapi.org by lat/lon)
-    // Find timezone with nearest lat/lon (fallback to UTC)
     let timeStr = "", tzStr = "";
     try {
       // Get timezone via GeoNames (username=demo, limited, but works for demo)
@@ -200,7 +222,6 @@ async function fetchSunTimes(airport) {
       }
     } catch {}
     if (!timeStr) {
-      // fallback: show UTC
       const now = new Date();
       timeStr = pad2(now.getUTCHours()) + ":" + pad2(now.getUTCMinutes()) + " UTC";
       tzStr = "UTC";
@@ -218,24 +239,145 @@ async function fetchSunTimes(airport) {
 }
 
 // --------------- WEBCAM --------------- //
-function setWebcam(airport) {
-  webcamFrame.src = airport.webcam;
+function setWebcam(airport, customLoc) {
+  webcamError.textContent = "";
+  webcamLoading.style.display = "none";
+  if (customLoc && customLoc.youtubeEmbedUrl) {
+    webcamFrame.src = customLoc.youtubeEmbedUrl;
+  } else {
+    webcamFrame.src = airport.webcam;
+  }
 }
 
 // --------------- RADAR MAP --------------- //
-// Optionally, could center globe.adsbexchange.com on airport coordinates by manipulating map URL fragment, but for now, keep global.
 
+// ----------- WEATHER SEARCH ----------- //
+weatherSearchForm.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const query = weatherLocationInput.value.trim();
+  if (!query) return;
+  weatherLoading.style.display = "";
+  weatherError.textContent = "";
+  try {
+    // If query is lat,lon pair
+    if (/^-?\d+(\.\d+)?\s*,\s*-?\d+(\.\d+)?$/.test(query)) {
+      const [lat, lon] = query.split(',').map(Number);
+      customWeatherLoc = { lat, lon, label: `Lat: ${lat}, Lon: ${lon}` };
+      fetchWeather(AIRPORTS[airportSelect.value], customWeatherLoc);
+      return;
+    }
+    // If ICAO or IATA code (4 or 3 letters)
+    if (/^[A-Z]{4}$/i.test(query)) {
+      // ICAO
+      const match = AIRPORTS.find(a => a.icao.toLowerCase() === query.toLowerCase());
+      if (match) {
+        customWeatherLoc = { lat: match.lat, lon: match.lon, label: match.name };
+        fetchWeather(AIRPORTS[airportSelect.value], customWeatherLoc);
+        return;
+      }
+    }
+    if (/^[A-Z]{3}$/i.test(query)) {
+      // IATA
+      const match = AIRPORTS.find(a => a.iata.toLowerCase() === query.toLowerCase());
+      if (match) {
+        customWeatherLoc = { lat: match.lat, lon: match.lon, label: match.name };
+        fetchWeather(AIRPORTS[airportSelect.value], customWeatherLoc);
+        return;
+      }
+    }
+    // City name or other: use Open-Meteo geocoding
+    const geoUrl = `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(query)}&count=1&language=en&format=json`;
+    const geoRes = await fetch(geoUrl);
+    const geoData = await geoRes.json();
+    if (geoData && geoData.results && geoData.results.length) {
+      const place = geoData.results[0];
+      customWeatherLoc = {
+        lat: place.latitude,
+        lon: place.longitude,
+        label: place.name + (place.country ? `, ${place.country}` : '')
+      };
+      fetchWeather(AIRPORTS[airportSelect.value], customWeatherLoc);
+      return;
+    } else {
+      weatherError.textContent = "Location not found.";
+    }
+  } catch (err) {
+    weatherError.textContent = "Location not found.";
+  }
+  weatherLoading.style.display = "none";
+});
+
+resetWeatherBtn.addEventListener('click', () => {
+  weatherLocationInput.value = "";
+  customWeatherLoc = null;
+  fetchWeather(AIRPORTS[airportSelect.value]);
+});
+
+// ----------- WEBCAM SEARCH ----------- //
+webcamSearchForm.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const query = webcamLocationInput.value.trim();
+  if (!query) return;
+  webcamLoading.style.display = "";
+  webcamError.textContent = "";
+  try {
+    // ICAO or IATA code logic (try AIRPORTS array first for match)
+    let match = AIRPORTS.find(a =>
+      a.icao.toLowerCase() === query.toLowerCase() ||
+      a.iata.toLowerCase() === query.toLowerCase()
+    );
+    if (match) {
+      customWebcamLoc = { query, label: match.name, youtubeEmbedUrl: match.webcam };
+      setWebcam(AIRPORTS[airportSelect.value], customWebcamLoc);
+      webcamLoading.style.display = "none";
+      return;
+    }
+    // Otherwise, search YouTube for "Airport [query] live cam"
+    const ytSearch = await fetch(`https://www.youtube.com/results?search_query=${encodeURIComponent("Airport " + query + " live cam")}`);
+    // Fallback for static: Use a prebuilt mapping, or instruct user
+    // Since we can't call YouTube Data API in a static demo, use a static fallback embed:
+    let ytEmbed;
+    if (/heathrow|egll/i.test(query)) ytEmbed = "https://www.youtube.com/embed/B8HS5FjvGqk";
+    else if (/lax|los angeles/i.test(query)) ytEmbed = "https://www.youtube.com/embed/2IM1Zgk2nAE";
+    else if (/frankfurt|eddf|fra/i.test(query)) ytEmbed = "https://www.youtube.com/embed/4j7I4K9Xc0g";
+    else if (/schiphol|eham|ams|amsterdam/i.test(query)) ytEmbed = "https://www.youtube.com/embed/7xkJ-2ZC4mA";
+    else if (/haneda|rjtt|hnd|tokyo/i.test(query)) ytEmbed = "https://www.youtube.com/embed/NyD2A3nav7A";
+    else if (/sydney|yssy|syd/i.test(query)) ytEmbed = "https://www.youtube.com/embed/iQ4bR9F5s-Y";
+    else {
+      webcamError.textContent = "Webcam not found for this airport. Try ICAO/IATA or a larger airport.";
+      webcamLoading.style.display = "none";
+      return;
+    }
+    customWebcamLoc = { query, label: query, youtubeEmbedUrl: ytEmbed };
+    setWebcam(AIRPORTS[airportSelect.value], customWebcamLoc);
+    webcamLoading.style.display = "none";
+  } catch (err) {
+    webcamError.textContent = "Webcam not found for this airport.";
+    webcamLoading.style.display = "none";
+  }
+});
+
+resetWebcamBtn.addEventListener('click', () => {
+  webcamLocationInput.value = "";
+  customWebcamLoc = null;
+  setWebcam(AIRPORTS[airportSelect.value]);
+});
+
+// --------------- REFRESH ALL --------------- //
 function refreshAll(airport) {
-  setWebcam(airport);
-  fetchWeather(airport);
+  setWebcam(airport, customWebcamLoc);
+  fetchWeather(airport, customWeatherLoc);
   fetchMetarTaf(airport);
   fetchSunTimes(airport);
 }
 
 // Handle airport dropdown change
 airportSelect.addEventListener('change', () => {
-  const idx = airportSelect.value;
-  refreshAll(AIRPORTS[idx]);
+  customWeatherLoc = null;
+  customWebcamLoc = null;
+  weatherLocationInput.value = "";
+  webcamLocationInput.value = "";
+  refreshAll(AIRPORTS[airportSelect.value]);
 });
 
 // ----------- DISPLAY MODE SWITCHING -----------
