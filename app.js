@@ -64,6 +64,19 @@ const sunError = document.getElementById('sun-error');
 const airportSelect = document.getElementById('main-airport-select');
 const displayModeSelect = document.getElementById('display-mode-select');
 
+// Tabs
+const tabBtns = document.querySelectorAll('.tab-btn');
+const infoCards = document.querySelectorAll('.info-card');
+
+tabBtns.forEach(btn => {
+  btn.addEventListener('click', function() {
+    tabBtns.forEach(b => b.classList.remove('active'));
+    infoCards.forEach(card => card.style.display = 'none');
+    btn.classList.add('active');
+    document.getElementById(btn.dataset.tab).style.display = 'block';
+  });
+});
+
 // Populate airport dropdown
 function populateAirportSelect() {
   AIRPORTS.forEach((a, i) => {
@@ -219,7 +232,7 @@ function refreshAll(airport) {
   fetchSunTimes(airport);
 }
 
-// Handle dropdown change
+// Handle airport dropdown change
 airportSelect.addEventListener('change', () => {
   const idx = airportSelect.value;
   refreshAll(AIRPORTS[idx]);
