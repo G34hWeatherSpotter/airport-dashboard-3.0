@@ -73,6 +73,12 @@ const resetWeatherBtn = document.getElementById('reset-weather-btn');
 const webcamSearchForm = document.getElementById('webcam-search-form');
 const webcamLocationInput = document.getElementById('webcam-location-input');
 const resetWebcamBtn = document.getElementById('reset-webcam-btn');
+
+// Webcam custom link UI
+const webcamCustomLinkForm = document.getElementById('webcam-custom-link-form');
+const webcamCustomLinkInput = document.getElementById('webcam-custom-link-input');
+const resetCustomLinkBtn = document.getElementById('reset-custom-link-btn');
+
 const webcamLoading = document.getElementById('webcam-loading');
 const webcamError = document.getElementById('webcam-error');
 
@@ -102,6 +108,7 @@ populateAirportSelect();
 
 let customWeatherLoc = null; // {lat, lon, label}
 let customWebcamLoc = null; // {query, label, youtubeEmbedUrl}
+let customWebcamRawLink = null; // {url, embedUrl, label, platform}
 
 // Weather icons for Open-Meteo codes
 const weatherIcons = {
@@ -239,9 +246,13 @@ async function fetchSunTimes(airport) {
 }
 
 // --------------- WEBCAM --------------- //
-function setWebcam(airport, customLoc) {
+function setWebcam(airport, customLoc, customRawLink) {
   webcamError.textContent = "";
   webcamLoading.style.display = "none";
+  if (customRawLink && customRawLink.embedUrl) {
+    webcamFrame.src = customRawLink.embedUrl;
+    return;
+  }
   if (customLoc && customLoc.youtubeEmbedUrl) {
     webcamFrame.src = customLoc.youtubeEmbedUrl;
   } else {
@@ -316,6 +327,7 @@ resetWeatherBtn.addEventListener('click', () => {
 // ----------- WEBCAM SEARCH ----------- //
 webcamSearchForm.addEventListener('submit', async (e) => {
   e.preventDefault();
+  customWebcamRawLink = null;
   const query = webcamLocationInput.value.trim();
   if (!query) return;
   webcamLoading.style.display = "";
@@ -328,14 +340,12 @@ webcamSearchForm.addEventListener('submit', async (e) => {
     );
     if (match) {
       customWebcamLoc = { query, label: match.name, youtubeEmbedUrl: match.webcam };
-      setWebcam(AIRPORTS[airportSelect.value], customWebcamLoc);
+      setWebcam(AIRPORTS[airportSelect.value], customWebcamLoc, null);
       webcamLoading.style.display = "none";
       return;
     }
     // Otherwise, search YouTube for "Airport [query] live cam"
-    const ytSearch = await fetch(`https://www.youtube.com/results?search_query=${encodeURIComponent("Airport " + query + " live cam")}`);
     // Fallback for static: Use a prebuilt mapping, or instruct user
-    // Since we can't call YouTube Data API in a static demo, use a static fallback embed:
     let ytEmbed;
     if (/heathrow|egll/i.test(query)) ytEmbed = "https://www.youtube.com/embed/B8HS5FjvGqk";
     else if (/lax|los angeles/i.test(query)) ytEmbed = "https://www.youtube.com/embed/2IM1Zgk2nAE";
@@ -349,7 +359,7 @@ webcamSearchForm.addEventListener('submit', async (e) => {
       return;
     }
     customWebcamLoc = { query, label: query, youtubeEmbedUrl: ytEmbed };
-    setWebcam(AIRPORTS[airportSelect.value], customWebcamLoc);
+    setWebcam(AIRPORTS[airportSelect.value], customWebcamLoc, null);
     webcamLoading.style.display = "none";
   } catch (err) {
     webcamError.textContent = "Webcam not found for this airport.";
@@ -360,12 +370,73 @@ webcamSearchForm.addEventListener('submit', async (e) => {
 resetWebcamBtn.addEventListener('click', () => {
   webcamLocationInput.value = "";
   customWebcamLoc = null;
+  customWebcamRawLink = null;
   setWebcam(AIRPORTS[airportSelect.value]);
+});
+
+// ----------- WEBCAM CUSTOM LINK ----------- //
+webcamCustomLinkForm.addEventListener('submit', (e) => {
+  e.preventDefault();
+  const url = webcamCustomLinkInput.value.trim();
+  if (!url) return;
+  customWebcamLoc = null;
+  let embedUrl = null;
+  let platform = null;
+  if (/youtube\.com\/watch\?v=([a-zA-Z0-9_-]+)/.test(url)) {
+    // YouTube normal link
+    const id = url.match(/v=([a-zA-Z0-9_-]+)/)[1];
+    embedUrl = `https://www.youtube.com/embed/${id}`;
+    platform = "YouTube";
+  } else if (/youtu\.be\/([a-zA-Z0-9_-]+)/.test(url)) {
+    // YouTube short link
+    const id = url.match(/youtu\.be\/([a-zA-Z0-9_-]+)/)[1];
+    embedUrl = `https://www.youtube.com/embed/${id}`;
+    platform = "YouTube";
+  } else if (/youtube\.com\/embed\/([a-zA-Z0-9_-]+)/.test(url)) {
+    // Already embed
+    embedUrl = url;
+    platform = "YouTube";
+  } else if (/twitch\.tv\/([a-zA-Z0-9_]+)/.test(url)) {
+    // Twitch channel
+    const channel = url.match(/twitch\.tv\/([a-zA-Z0-9_]+)/)[1];
+    embedUrl = `https://player.twitch.tv/?channel=${channel}&parent=${location.hostname}`;
+    platform = "Twitch";
+  } else if (/facebook\.com\/.*\/videos\/(\d+)/.test(url)) {
+    // Facebook Live, just show link (embedding is restricted)
+    embedUrl = null;
+    platform = "Facebook";
+  } else if (/vimeo\.com\/(\d+)/.test(url)) {
+    // Vimeo
+    const id = url.match(/vimeo\.com\/(\d+)/)[1];
+    embedUrl = `https://player.vimeo.com/video/${id}`;
+    platform = "Vimeo";
+  } else if (/livestream\.com\/accounts\/(\d+)\/events\/(\d+)/.test(url)) {
+    // Livestream.com
+    embedUrl = url.replace("livestream.com/", "livestream.com/embed/");
+    platform = "Livestream";
+  } else {
+    // Generic: try to use as is or show error
+    embedUrl = url;
+    platform = "Custom";
+  }
+  if (embedUrl) {
+    customWebcamRawLink = { url, embedUrl, platform, label: url };
+    setWebcam(AIRPORTS[airportSelect.value], null, customWebcamRawLink);
+  } else {
+    webcamError.textContent = `Cannot embed this livestream directly. Please open in a new tab: <a href="${url}" target="_blank">${url}</a>`;
+    webcamFrame.src = "";
+  }
+});
+
+resetCustomLinkBtn.addEventListener('click', () => {
+  webcamCustomLinkInput.value = "";
+  customWebcamRawLink = null;
+  setWebcam(AIRPORTS[airportSelect.value], customWebcamLoc, null);
 });
 
 // --------------- REFRESH ALL --------------- //
 function refreshAll(airport) {
-  setWebcam(airport, customWebcamLoc);
+  setWebcam(airport, customWebcamLoc, customWebcamRawLink);
   fetchWeather(airport, customWeatherLoc);
   fetchMetarTaf(airport);
   fetchSunTimes(airport);
@@ -375,8 +446,10 @@ function refreshAll(airport) {
 airportSelect.addEventListener('change', () => {
   customWeatherLoc = null;
   customWebcamLoc = null;
+  customWebcamRawLink = null;
   weatherLocationInput.value = "";
   webcamLocationInput.value = "";
+  webcamCustomLinkInput.value = "";
   refreshAll(AIRPORTS[airportSelect.value]);
 });
 
