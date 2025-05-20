@@ -65,6 +65,31 @@ h1 {
   border: 1px solid #bcd;
 }
 
+/* ------------ ISSUE LINK ------------ */
+.issue-link-row {
+  margin-top: 0.7rem;
+  margin-bottom: 0.1rem;
+  text-align: center;
+}
+.issue-link {
+  background: #fffbe7;
+  color: #2a4d8f;
+  border: 1px solid #e1d888;
+  border-radius: 8px;
+  font-weight: 600;
+  text-decoration: none;
+  padding: 0.45em 1.3em;
+  font-size: 1.1rem;
+  box-shadow: 0 2px 6px #0001;
+  transition: background 0.12s, color 0.12s;
+  display: inline-block;
+}
+.issue-link:hover {
+  background: #fff2b3;
+  color: #ad7e00;
+  border-color: #e7c53d;
+}
+
 /* ------------ MAIN AREA ------------ */
 .main-area {
   display: flex;
