@@ -47,3 +47,18 @@ button {
   padding: 1em;
   max-width: 400px;
 }
+.weather-row {
+  display: flex;
+  align-items: center;
+  margin-bottom: 1em;
+  flex-wrap: wrap;
+}
+@media (max-width: 600px) {
+  .weather-row {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .weather-row > * {
+    margin-bottom: .5em;
+  }
+}
