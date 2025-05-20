@@ -7,57 +7,59 @@
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <div class="container">
-    <h1>Airport Dashboard 3.0</h1>
-    <p>Live airport webcam, radar, and weather in one place.</p>
-
-    <section>
-      <h2>Airport Webcam</h2>
-      <label>
-        Choose airport:
-        <select id="webcam-select"></select>
-      </label>
-      <div id="webcam-area">
-        <iframe id="webcam-frame" width="100%" height="360" frameborder="0" allowfullscreen></iframe>
+  <div class="dashboard-container">
+    <header>
+      <div class="header-row">
+        <h1>Airport Dashboard 3.0</h1>
+        <div class="display-mode-row">
+          <label for="display-mode-select">Display Mode:</label>
+          <select id="display-mode-select">
+            <option value="monitor">Monitor / Small TV</option>
+            <option value="tv">Large TV / Projector</option>
+          </select>
+        </div>
       </div>
-      <div id="webcam-search" style="display:none;">
-        <input type="text" id="webcam-custom" placeholder="Enter airport or city...">
-        <button id="webcam-search-btn">Search</button>
-        <div id="webcam-search-link"></div>
+      <div class="airport-select-row">
+        <label for="main-airport-select">Airport:</label>
+        <select id="main-airport-select"></select>
       </div>
-    </section>
-
-    <section>
-      <h2>Live Flight Radar</h2>
-      <iframe
-        title="ADSBexchange Globe"
-        src="https://globe.adsbexchange.com/"
-        width="100%"
-        height="500"
-        style="border:0; border-radius:8px; min-height:400px;"
-        allowfullscreen>
-      </iframe>
-      <p class="source-note">
-        Data source: <a href="https://globe.adsbexchange.com/" target="_blank">ADSBexchange Globe</a>
-      </p>
-    </section>
-
-    <section>
-      <h2>Current Weather</h2>
-      <div class="weather-row">
-        <label>
-          Choose airport:
-          <select id="weather-select"></select>
-        </label>
-        <span style="margin:0 1em;">or</span>
-        <input type="text" id="weather-search-input" placeholder="Search city or airport...">
-        <button id="weather-search-btn">Search</button>
-      </div>
-      <button id="weather-btn">Get Weather</button>
-      <div id="weather-loading" style="display:none;">Loading...</div>
-      <div id="weather-error" style="color:red;"></div>
-      <div id="weather-result"></div>
-    </section>
+    </header>
+    <main class="dashboard-grid">
+      <section class="dashboard-card" id="webcam-card">
+        <h2>Live Airport Webcam</h2>
+        <iframe id="webcam-frame" width="100%" height="320" frameborder="0" allowfullscreen></iframe>
+      </section>
+      <section class="dashboard-card" id="radar-card">
+        <h2>Flight Radar Map</h2>
+        <iframe
+          id="radar-frame"
+          title="ADSBexchange Globe"
+          src="https://globe.adsbexchange.com/"
+          width="100%"
+          height="320"
+          style="border:0; border-radius:8px; min-height:200px;"
+          allowfullscreen>
+        </iframe>
+      </section>
+      <section class="dashboard-card" id="weather-card">
+        <h2>Current Weather</h2>
+        <div id="weather-loading" style="display:none;">Loading...</div>
+        <div id="weather-error" style="color:red;"></div>
+        <div id="weather-result"></div>
+      </section>
+      <section class="dashboard-card" id="metar-taf-card">
+        <h2>METAR &amp; TAF</h2>
+        <div id="metar-loading" style="display:none;">Loading...</div>
+        <div id="metar-error" style="color:red;"></div>
+        <div id="metar-result"></div>
+      </section>
+      <section class="dashboard-card" id="sun-card">
+        <h2>Sunrise, Sunset &amp; Local Time</h2>
+        <div id="sun-loading" style="display:none;">Loading...</div>
+        <div id="sun-error" style="color:red;"></div>
+        <div id="sun-result"></div>
+      </section>
+    </main>
   </div>
   <script src="app.js"></script>
 </body>
