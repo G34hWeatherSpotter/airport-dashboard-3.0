@@ -102,6 +102,48 @@ h1 {
   min-width: 440px;
 }
 
+.webcam-search-form,
+.weather-search-form {
+  display: flex;
+  gap: 0.3em;
+  margin-bottom: 0.7em;
+}
+.webcam-search-form input,
+.weather-search-form input {
+  flex: 1 1 0;
+  font-size: 1em;
+  border-radius: 6px;
+  border: 1px solid #bcd;
+  padding: 0.3em 0.6em;
+}
+.webcam-search-form button,
+.weather-search-form button {
+  font-size: 1em;
+  border-radius: 6px;
+  border: 1px solid #bcd;
+  background: #fafcff;
+  cursor: pointer;
+  padding: 0.25em 0.95em;
+  transition: background 0.12s;
+}
+.webcam-search-form button[type="submit"],
+.weather-search-form button[type="submit"] {
+  background: #2a4d8f;
+  color: #fff;
+  border: none;
+}
+.webcam-search-form button#reset-webcam-btn,
+.weather-search-form button#reset-weather-btn {
+  background: #fff;
+  color: #2a4d8f;
+  border: 1px solid #bcd;
+}
+
+.webcam-search-form button:active,
+.weather-search-form button:active {
+  filter: brightness(0.93);
+}
+
 /* ------------ INFO CARDS AREA ------------ */
 .info-cards-area {
   background: none;
