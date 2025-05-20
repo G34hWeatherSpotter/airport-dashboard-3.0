@@ -1,4 +1,5 @@
-body {
+
+ body {
   font-family: 'Segoe UI', Arial, sans-serif;
   background: #e9f2fb;
   margin: 0;
@@ -158,6 +159,7 @@ h1 {
   border: none;
 }
 .webcam-search-form button#reset-webcam-btn,
+.webcam-search-form button#reset-custom-link-btn,
 .weather-search-form button#reset-weather-btn {
   background: #fff;
   color: #2a4d8f;
