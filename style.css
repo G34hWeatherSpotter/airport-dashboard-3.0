@@ -1,64 +1,161 @@
 body {
-  font-family: sans-serif;
-  background: #f7f9fa;
+  font-family: 'Segoe UI', Arial, sans-serif;
+  background: #e9f2fb;
   margin: 0;
   padding: 0;
 }
-.container {
-  max-width: 900px;
+
+.dashboard-container {
+  max-width: 1200px;
   margin: 0 auto;
-  padding: 2rem;
-  background: #fff;
-  border-radius: 10px;
-  box-shadow: 0 2px 8px #0001;
+  padding: 1.5rem;
 }
+
+/* ------------ HEADER ------------ */
+header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 1.2rem;
+}
+
+.header-row {
+  width: 100%;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+}
+
 h1 {
-  text-align: center;
+  margin: 0 0 0.8rem 0;
+  font-size: 2.2rem;
+  letter-spacing: 1.5px;
+  flex-shrink: 0;
 }
-section {
-  margin: 2rem 0;
-}
-label {
-  font-weight: 500;
-  margin-right: 1em;
-}
-select, input[type="text"] {
-  font-size: 1em;
-  padding: .3em .5em;
-  margin-left: .5em;
-}
-button {
-  padding: .3em 1em;
-  font-size: 1em;
-  margin-left: .5em;
-}
-.source-note {
-  font-size: .95em;
-  color: #555;
-  margin-top: .5em;
-}
-#webcam-area, #webcam-search-link {
-  margin-top: .5em;
-}
-#weather-result {
-  margin-top: 1em;
-  background: #f3f6fa;
-  border-radius: 8px;
-  padding: 1em;
-  max-width: 400px;
-}
-.weather-row {
+
+.display-mode-row {
   display: flex;
   align-items: center;
-  margin-bottom: 1em;
-  flex-wrap: wrap;
+  margin-left: 1em;
+  font-size: 1.1rem;
+  gap: 0.5em;
 }
-@media (max-width: 600px) {
-  .weather-row {
-    flex-direction: column;
-    align-items: flex-start;
+#display-mode-select {
+  font-size: 1rem;
+  padding: 0.25em 1.2em 0.25em 0.7em;
+  border-radius: 6px;
+  border: 1px solid #bcd;
+}
+
+.airport-select-row {
+  margin-bottom: 0.5rem;
+  font-size: 1.1rem;
+  display: flex;
+  align-items: center;
+  margin-top: 0.7rem;
+}
+
+#main-airport-select {
+  font-size: 1.05em;
+  padding: 0.3em 1.2em 0.3em 0.7em;
+  margin-left: 0.8em;
+  border-radius: 6px;
+  border: 1px solid #bcd;
+}
+
+/* ------------ DASHBOARD GRID ------------ */
+.dashboard-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+  gap: 1.3rem;
+}
+.dashboard-card {
+  background: #fff;
+  border-radius: 14px;
+  box-shadow: 0 3px 16px #0002;
+  padding: 1rem 1.1rem;
+  min-height: 180px;
+  display: flex;
+  flex-direction: column;
+}
+
+.dashboard-card h2 {
+  margin-top: 0;
+  margin-bottom: 0.7em;
+  font-size: 1.25rem;
+  letter-spacing: 0.5px;
+  color: #2a4d8f;
+}
+
+#weather-result, #metar-result, #sun-result {
+  font-size: 1.1rem;
+  margin-top: 0.5em;
+  line-height: 1.7;
+}
+
+.weather-icon {
+  font-size: 2.4em;
+  display: inline-block;
+  margin-right: 0.3em;
+  vertical-align: middle;
+}
+
+/* ========== LARGE TV / PROJECTOR MODE ========== */
+body.display-tv h1 {
+  font-size: 3.2rem;
+  letter-spacing: 3px;
+}
+body.display-tv .dashboard-card {
+  padding: 2.2rem 2.5rem;
+  min-height: 260px;
+}
+body.display-tv .dashboard-card h2 {
+  font-size: 2rem;
+}
+body.display-tv #weather-result,
+body.display-tv #metar-result,
+body.display-tv #sun-result {
+  font-size: 1.7rem;
+}
+body.display-tv .weather-icon {
+  font-size: 4em;
+}
+body.display-tv #webcam-frame,
+body.display-tv #radar-frame {
+  height: 420px !important;
+}
+
+/* ========== MONITOR / SMALL TV MODE ========== */
+body.display-monitor h1 {
+  font-size: 2.2rem;
+}
+body.display-monitor .dashboard-card {
+  padding: 1rem 1.1rem;
+  min-height: 180px;
+}
+body.display-monitor .dashboard-card h2 {
+  font-size: 1.25rem;
+}
+body.display-monitor #weather-result,
+body.display-monitor #metar-result,
+body.display-monitor #sun-result {
+  font-size: 1.1rem;
+}
+body.display-monitor .weather-icon {
+  font-size: 2.4em;
+}
+body.display-monitor #webcam-frame,
+body.display-monitor #radar-frame {
+  height: 320px !important;
+}
+
+/* ========== RESPONSIVE ========== */
+@media (max-width: 850px) {
+  .dashboard-grid {
+    grid-template-columns: 1fr;
   }
-  .weather-row > * {
-    margin-bottom: .5em;
+  .dashboard-card {
+    min-height: 140px;
   }
 }
