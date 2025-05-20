@@ -50,6 +50,11 @@
             <button type="submit">Search</button>
             <button type="button" id="reset-webcam-btn" title="Reset to selected airport">&#x21bb;</button>
           </form>
+          <form id="webcam-custom-link-form" class="webcam-search-form" style="margin-top:0.3em;">
+            <input type="text" id="webcam-custom-link-input" placeholder="Paste livestream URL (YouTube, Twitch, etc)">
+            <button type="submit">Set Stream</button>
+            <button type="button" id="reset-custom-link-btn" title="Reset to airport/auto">&#x21bb;</button>
+          </form>
           <div id="webcam-loading" style="display:none;">Loading...</div>
           <div id="webcam-error" style="color:red;"></div>
           <iframe id="webcam-frame" width="100%" height="320" frameborder="0" allowfullscreen></iframe>
