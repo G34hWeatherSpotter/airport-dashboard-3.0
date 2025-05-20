@@ -24,41 +24,50 @@
         <select id="main-airport-select"></select>
       </div>
     </header>
-    <main class="dashboard-grid">
-      <section class="dashboard-card" id="webcam-card">
-        <h2>Live Airport Webcam</h2>
-        <iframe id="webcam-frame" width="100%" height="320" frameborder="0" allowfullscreen></iframe>
-      </section>
-      <section class="dashboard-card" id="radar-card">
-        <h2>Flight Radar Map</h2>
-        <iframe
-          id="radar-frame"
-          title="ADSBexchange Globe"
-          src="https://globe.adsbexchange.com/"
-          width="100%"
-          height="320"
-          style="border:0; border-radius:8px; min-height:200px;"
-          allowfullscreen>
-        </iframe>
-      </section>
-      <section class="dashboard-card" id="weather-card">
-        <h2>Current Weather</h2>
-        <div id="weather-loading" style="display:none;">Loading...</div>
-        <div id="weather-error" style="color:red;"></div>
-        <div id="weather-result"></div>
-      </section>
-      <section class="dashboard-card" id="metar-taf-card">
-        <h2>METAR &amp; TAF</h2>
-        <div id="metar-loading" style="display:none;">Loading...</div>
-        <div id="metar-error" style="color:red;"></div>
-        <div id="metar-result"></div>
-      </section>
-      <section class="dashboard-card" id="sun-card">
-        <h2>Sunrise, Sunset &amp; Local Time</h2>
-        <div id="sun-loading" style="display:none;">Loading...</div>
-        <div id="sun-error" style="color:red;"></div>
-        <div id="sun-result"></div>
-      </section>
+    <main class="main-area">
+      <div class="main-large-tiles">
+        <section class="dashboard-card main-tile" id="radar-card">
+          <h2>Flight Radar Map</h2>
+          <iframe
+            id="radar-frame"
+            title="ADSBexchange Globe"
+            src="https://globe.adsbexchange.com/"
+            width="100%"
+            height="480"
+            style="border:0; border-radius:12px;"
+            allowfullscreen>
+          </iframe>
+        </section>
+        <section class="dashboard-card main-tile" id="webcam-card">
+          <h2>Live Airport Webcam</h2>
+          <iframe id="webcam-frame" width="100%" height="320" frameborder="0" allowfullscreen></iframe>
+        </section>
+      </div>
+      <div class="info-cards-area">
+        <div class="info-cards-tabs">
+          <button class="tab-btn active" data-tab="weather-card">Weather</button>
+          <button class="tab-btn" data-tab="metar-taf-card">METAR/TAF</button>
+          <button class="tab-btn" data-tab="sun-card">Sun/Time</button>
+        </div>
+        <section class="dashboard-card info-card" id="weather-card">
+          <h2>Current Weather</h2>
+          <div id="weather-loading" style="display:none;">Loading...</div>
+          <div id="weather-error" style="color:red;"></div>
+          <div id="weather-result"></div>
+        </section>
+        <section class="dashboard-card info-card" id="metar-taf-card" style="display:none;">
+          <h2>METAR &amp; TAF</h2>
+          <div id="metar-loading" style="display:none;">Loading...</div>
+          <div id="metar-error" style="color:red;"></div>
+          <div id="metar-result"></div>
+        </section>
+        <section class="dashboard-card info-card" id="sun-card" style="display:none;">
+          <h2>Sunrise, Sunset &amp; Local Time</h2>
+          <div id="sun-loading" style="display:none;">Loading...</div>
+          <div id="sun-error" style="color:red;"></div>
+          <div id="sun-result"></div>
+        </section>
+      </div>
     </main>
   </div>
   <script src="app.js"></script>
