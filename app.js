@@ -89,7 +89,10 @@ const weatherBtn = document.getElementById('weather-btn');
 const weatherLoading = document.getElementById('weather-loading');
 const weatherError = document.getElementById('weather-error');
 const weatherResult = document.getElementById('weather-result');
+const weatherSearchInput = document.getElementById('weather-search-input');
+const weatherSearchBtn = document.getElementById('weather-search-btn');
 
+// Populate dropdown
 function populateWeatherSelect() {
   AIRPORTS.forEach((a, i) => {
     const opt = document.createElement('option');
@@ -111,9 +114,13 @@ const weatherIcons = {
   95: "⛈️", 96: "⛈️", 99: "⛈️"
 };
 
-weatherBtn.addEventListener('click', async () => {
-  const idx = weatherSelect.value;
-  const { lat, lon, name } = AIRPORTS[idx];
+// Helper: convert Celsius to Fahrenheit
+function cToF(c) {
+  return Math.round((c * 9/5) + 32);
+}
+
+// Helper: fetch weather by lat/lon
+async function fetchWeatherByLatLon(lat, lon, label) {
   weatherLoading.style.display = "";
   weatherError.textContent = "";
   weatherResult.innerHTML = "";
@@ -126,14 +133,47 @@ weatherBtn.addEventListener('click', async () => {
     const w = data.current_weather;
     weatherResult.innerHTML = `
       <div style="font-size:2em">${weatherIcons[w.weathercode] || "❓"}</div>
-      <strong>${name}</strong><br>
-      <strong>Temperature:</strong> ${w.temperature}°C<br>
+      <strong>${label}</strong><br>
+      <strong>Temperature:</strong> ${cToF(w.temperature)}°F<br>
       <strong>Windspeed:</strong> ${w.windspeed} km/h<br>
       <strong>Wind direction:</strong> ${w.winddirection}°<br>
       <strong>Weather code:</strong> ${w.weathercode}
     `;
   } catch (e) {
-    weatherError.textContent = "Weather data unavailable for this airport.";
+    weatherError.textContent = "Weather data unavailable for this location.";
   }
   weatherLoading.style.display = "none";
+}
+
+// Dropdown button
+weatherBtn.addEventListener('click', async () => {
+  const idx = weatherSelect.value;
+  const { lat, lon, name } = AIRPORTS[idx];
+  fetchWeatherByLatLon(lat, lon, name);
+});
+
+// Search button
+weatherSearchBtn.addEventListener('click', async () => {
+  const query = weatherSearchInput.value.trim();
+  if (!query) return;
+  weatherLoading.style.display = "";
+  weatherError.textContent = "";
+  weatherResult.innerHTML = "";
+  try {
+    // Use Nominatim to geocode city/airport/ICAO
+    const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}`;
+    const res = await fetch(url, { headers: { 'Accept-Language': 'en' } });
+    const data = await res.json();
+    if (!Array.isArray(data) || !data.length) throw new Error("Not found");
+    const { lat, lon, display_name } = data[0];
+    fetchWeatherByLatLon(lat, lon, display_name);
+  } catch {
+    weatherLoading.style.display = "none";
+    weatherError.textContent = "Could not find location. Try a city, ICAO, or airport name.";
+  }
+});
+
+// Allow pressing Enter in search box to trigger search
+weatherSearchInput.addEventListener('keydown', (e) => {
+  if (e.key === "Enter") weatherSearchBtn.click();
 });
