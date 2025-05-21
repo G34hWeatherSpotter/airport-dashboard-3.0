@@ -1,5 +1,4 @@
-
- body {
+body {
   font-family: 'Segoe UI', Arial, sans-serif;
   background: #e9f2fb;
   margin: 0;
@@ -12,7 +11,6 @@
   padding: 1.5rem;
 }
 
-/* ------------ HEADER ------------ */
 header {
   display: flex;
   flex-direction: column;
@@ -91,14 +89,42 @@ h1 {
   border-color: #e7c53d;
 }
 
-/* ------------ MAIN AREA ------------ */
+/* ------------ ANNOUNCEMENT BAR ------------ */
+.announcement-bar {
+  background: #fffbe7;
+  color: #ad7e00;
+  border: 1px solid #e1d888;
+  border-radius: 10px;
+  margin: 0.5em 0 1em 0;
+  padding: 0.7em 1.2em;
+  font-size: 1.13em;
+  text-align: center;
+  font-weight: 500;
+  box-shadow: 0 2px 8px #0001;
+}
+
+.admin-btn {
+  margin-top: 0.7em;
+  padding: 0.45em 1.6em;
+  background: #2a4d8f;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 1.1em;
+  cursor: pointer;
+  transition: background 0.13s;
+  font-weight: bold;
+}
+.admin-btn:hover {
+  background: #3a6cd1;
+}
+
 .main-area {
   display: flex;
   flex-direction: column;
   gap: 2.2rem;
 }
 
-/* ------------ MAIN LARGE TILES ------------ */
 .main-large-tiles {
   display: flex;
   gap: 2.2rem;
@@ -171,7 +197,6 @@ h1 {
   filter: brightness(0.93);
 }
 
-/* ------------ INFO CARDS AREA ------------ */
 .info-cards-area {
   background: none;
   margin: 0 auto;
@@ -232,68 +257,63 @@ h1 {
   vertical-align: middle;
 }
 
-/* ========== LARGE TV / PROJECTOR MODE ========== */
-body.display-tv h1 {
-  font-size: 3.2rem;
-  letter-spacing: 3px;
+/* ===== Admin Panel ===== */
+#admin-panel {
+  max-width: 1100px;
+  margin: 2em auto 0 auto;
+  border: 2px solid #e1d888;
+  border-radius: 16px;
 }
-body.display-tv .main-tile {
-  min-height: 600px;
-  padding: 2.2rem 2.5rem;
+#admin-panel h2 {
+  color: #ad7e00;
 }
-body.display-tv #radar-frame {
-  height: 600px !important;
+#admin-panel .admin-section {
+  margin-bottom: 1.2em;
 }
-body.display-tv #webcam-frame {
-  height: 400px !important;
+#admin-airport-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 0.7em;
+  background: #fff;
+  font-size: 1em;
 }
-body.display-tv .info-card {
-  padding: 2rem 2.5rem;
-  font-size: 1.7rem;
+#admin-airport-table th, #admin-airport-table td {
+  border: 1px solid #eee0a7;
+  padding: 0.3em 0.6em;
+  text-align: left;
 }
-body.display-tv .info-card h2 {
-  font-size: 2rem;
-}
-body.display-tv #weather-result,
-body.display-tv #metar-result,
-body.display-tv #sun-result {
-  font-size: 1.7rem;
-}
-body.display-tv .weather-icon {
-  font-size: 4em;
-}
-
-/* ========== MONITOR / SMALL TV MODE ========== */
-body.display-monitor h1 {
-  font-size: 2.2rem;
-}
-body.display-monitor .main-tile {
-  min-height: 440px;
-  padding: 1.2rem 1.6rem;
-}
-body.display-monitor #radar-frame {
-  height: 480px !important;
-}
-body.display-monitor #webcam-frame {
-  height: 320px !important;
-}
-body.display-monitor .info-card {
-  padding: 1.1rem 1.5rem;
-  font-size: 1.1rem;
-}
-body.display-monitor .info-card h2 {
-  font-size: 1.18rem;
-}
-body.display-monitor #weather-result,
-body.display-monitor #metar-result,
-body.display-monitor #sun-result {
-  font-size: 1.1rem;
-}
-body.display-monitor .weather-icon {
-  font-size: 2.4em;
+#admin-airport-table th {
+  background: #faf7e2;
+  font-weight: 600;
 }
 
-/* ========== RESPONSIVE ========== */
+/* ===== Modal ===== */
+.modal {
+  position: fixed;
+  left: 0; top: 0; width: 100vw; height: 100vh;
+  background: #0004;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 99;
+}
+.modal-content {
+  background: #fff;
+  border-radius: 10px;
+  padding: 2.3em 2.1em;
+  min-width: 300px;
+  box-shadow: 0 4px 18px #0002;
+  position: relative;
+}
+.modal-close {
+  position: absolute;
+  top: 0.7em;
+  right: 1em;
+  font-size: 1.6em;
+  color: #666;
+  cursor: pointer;
+}
+
 @media (max-width: 1200px) {
   .main-large-tiles {
     flex-direction: column;
