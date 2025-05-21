@@ -1,5 +1,11 @@
+// =================== ADMIN PANEL STATE ===================
+let isAdmin = false;
+const ADMIN_PASSWORD = "admin123"; // <-- Change this password if needed
+let defaultStreamOverride = null; // If set, overrides airport webcam for everyone
+let announcementText = "";
+
 // ========== AIRPORT DATA ========== //
-const AIRPORTS = [
+let AIRPORTS = [
   {
     name: "London Heathrow (EGLL)",
     icao: "EGLL",
@@ -82,29 +88,38 @@ const resetCustomLinkBtn = document.getElementById('reset-custom-link-btn');
 const webcamLoading = document.getElementById('webcam-loading');
 const webcamError = document.getElementById('webcam-error');
 
-// Tabs
-const tabBtns = document.querySelectorAll('.tab-btn');
-const infoCards = document.querySelectorAll('.info-card');
+// Announcement Bar
+const announcementBar = document.getElementById('announcement-bar');
 
-tabBtns.forEach(btn => {
-  btn.addEventListener('click', function() {
-    tabBtns.forEach(b => b.classList.remove('active'));
-    infoCards.forEach(card => card.style.display = 'none');
-    btn.classList.add('active');
-    document.getElementById(btn.dataset.tab).style.display = 'block';
-  });
-});
+// Admin Panel
+const adminPanel = document.getElementById('admin-panel');
+const adminLoginBtn = document.getElementById('admin-login-btn');
+const adminLogoutBtn = document.getElementById('admin-logout-btn');
+const adminLoginModal = document.getElementById('admin-login-modal');
+const adminModalClose = document.getElementById('admin-modal-close');
+const adminLoginForm = document.getElementById('admin-login-form');
+const adminPasswordInput = document.getElementById('admin-password-input');
+const adminLoginError = document.getElementById('admin-login-error');
 
-// Populate airport dropdown
-function populateAirportSelect() {
-  AIRPORTS.forEach((a, i) => {
-    const opt = document.createElement('option');
-    opt.value = i;
-    opt.textContent = a.name;
-    airportSelect.appendChild(opt);
-  });
-}
-populateAirportSelect();
+// Admin Panel: Announcement
+const adminAnnouncementInput = document.getElementById('admin-announcement-input');
+const adminAnnouncementSetBtn = document.getElementById('admin-announcement-set');
+const adminAnnouncementClearBtn = document.getElementById('admin-announcement-clear');
+
+// Admin Panel: Airport Table
+const adminAirportTable = document.getElementById('admin-airport-table').getElementsByTagName('tbody')[0];
+const adminNewName = document.getElementById('admin-new-name');
+const adminNewIcao = document.getElementById('admin-new-icao');
+const adminNewIata = document.getElementById('admin-new-iata');
+const adminNewLat = document.getElementById('admin-new-lat');
+const adminNewLon = document.getElementById('admin-new-lon');
+const adminNewWebcam = document.getElementById('admin-new-webcam');
+const adminAddAirportBtn = document.getElementById('admin-add-airport');
+
+// Admin Panel: Default Stream
+const adminDefaultStreamInput = document.getElementById('admin-default-stream-input');
+const adminDefaultStreamSetBtn = document.getElementById('admin-default-stream-set');
+const adminDefaultStreamClearBtn = document.getElementById('admin-default-stream-clear');
 
 let customWeatherLoc = null; // {lat, lon, label}
 let customWebcamLoc = null; // {query, label, youtubeEmbedUrl}
@@ -118,17 +133,169 @@ const weatherIcons = {
   80: "🌧️", 81: "🌧️", 82: "🌧️", 95: "⛈️", 96: "⛈️", 99: "⛈️"
 };
 
+// ==================== ADMIN PANEL LOGIC ====================
+function showAdminPanel(show) {
+  adminPanel.style.display = show ? "" : "none";
+  adminLogoutBtn.style.display = show ? "" : "none";
+  adminLoginBtn.style.display = show ? "none" : "";
+  if (show) {
+    renderAdminAirportTable();
+    adminAnnouncementInput.value = announcementText;
+    adminDefaultStreamInput.value = defaultStreamOverride || "";
+  }
+}
+
+adminLoginBtn.onclick = () => {
+  adminLoginModal.style.display = "flex";
+  adminLoginError.textContent = "";
+  adminPasswordInput.value = "";
+  setTimeout(() => adminPasswordInput.focus(), 100);
+};
+adminLogoutBtn.onclick = () => {
+  isAdmin = false;
+  showAdminPanel(false);
+};
+
+adminModalClose.onclick = () => {
+  adminLoginModal.style.display = "none";
+};
+adminLoginModal.onclick = (e) => {
+  if (e.target === adminLoginModal) adminLoginModal.style.display = "none";
+};
+
+adminLoginForm.onsubmit = (e) => {
+  e.preventDefault();
+  if (adminPasswordInput.value === ADMIN_PASSWORD) {
+    isAdmin = true;
+    showAdminPanel(true);
+    adminLoginModal.style.display = "none";
+  } else {
+    adminLoginError.textContent = "Incorrect password.";
+  }
+};
+
+// --- Announcement Bar (Admin) ---
+function updateAnnouncementBar() {
+  if (announcementText && announcementText.trim().length > 0) {
+    announcementBar.textContent = announcementText;
+    announcementBar.style.display = "";
+  } else {
+    announcementBar.style.display = "none";
+  }
+}
+adminAnnouncementSetBtn.onclick = () => {
+  announcementText = adminAnnouncementInput.value.trim();
+  updateAnnouncementBar();
+};
+adminAnnouncementClearBtn.onclick = () => {
+  announcementText = "";
+  adminAnnouncementInput.value = "";
+  updateAnnouncementBar();
+};
+
+// --- Airport/Webcam Table (Admin) ---
+function renderAdminAirportTable() {
+  adminAirportTable.innerHTML = "";
+  AIRPORTS.forEach((a, idx) => {
+    const tr = document.createElement("tr");
+    function makeCell(text, type = "text", val = "", width = "auto", inputHandler = null) {
+      const td = document.createElement("td");
+      if (type === "text" || type === "number") {
+        const inp = document.createElement("input");
+        inp.type = type;
+        inp.value = text;
+        inp.style.width = width;
+        if (inputHandler) inp.onchange = (ev) => inputHandler(inp.value);
+        td.appendChild(inp);
+      } else {
+        td.textContent = text;
+      }
+      return td;
+    }
+    // Name, ICAO, IATA, Lat, Lon, Webcam, Remove
+    tr.appendChild(makeCell(a.name, "text", a.name, "11em", v => { a.name = v; updateAirportDropdown(); }));
+    tr.appendChild(makeCell(a.icao, "text", a.icao, "5em", v => { a.icao = v; updateAirportDropdown(); }));
+    tr.appendChild(makeCell(a.iata, "text", a.iata, "5em", v => { a.iata = v; updateAirportDropdown(); }));
+    tr.appendChild(makeCell(a.lat, "number", a.lat, "5em", v => { a.lat = parseFloat(v) || 0; }));
+    tr.appendChild(makeCell(a.lon, "number", a.lon, "5em", v => { a.lon = parseFloat(v) || 0; }));
+    tr.appendChild(makeCell(a.webcam, "text", a.webcam, "16em", v => { a.webcam = v; }));
+    const tdRemove = document.createElement("td");
+    const btnRemove = document.createElement("button");
+    btnRemove.textContent = "Remove";
+    btnRemove.onclick = () => {
+      AIRPORTS.splice(idx, 1);
+      renderAdminAirportTable();
+      updateAirportDropdown();
+    };
+    tdRemove.appendChild(btnRemove);
+    tr.appendChild(tdRemove);
+    adminAirportTable.appendChild(tr);
+  });
+}
+adminAddAirportBtn.onclick = () => {
+  const name = adminNewName.value.trim();
+  const icao = adminNewIcao.value.trim();
+  const iata = adminNewIata.value.trim();
+  const lat = parseFloat(adminNewLat.value);
+  const lon = parseFloat(adminNewLon.value);
+  const webcam = adminNewWebcam.value.trim();
+  if (!name || !icao || isNaN(lat) || isNaN(lon) || !webcam) {
+    alert("Please fill all required fields (Name, ICAO, Lat, Lon, Webcam).");
+    return;
+  }
+  AIRPORTS.push({ name, icao, iata, lat, lon, webcam });
+  adminNewName.value = adminNewIcao.value = adminNewIata.value = adminNewLat.value = adminNewLon.value = adminNewWebcam.value = "";
+  renderAdminAirportTable();
+  updateAirportDropdown();
+};
+
+// --- Default Stream (Admin) ---
+adminDefaultStreamSetBtn.onclick = () => {
+  defaultStreamOverride = adminDefaultStreamInput.value.trim();
+  refreshAll(AIRPORTS[airportSelect.value]);
+};
+adminDefaultStreamClearBtn.onclick = () => {
+  defaultStreamOverride = null;
+  adminDefaultStreamInput.value = "";
+  refreshAll(AIRPORTS[airportSelect.value]);
+};
+
+// ========== UI LOGIC (DASHBOARD) ==========
+
+function updateAirportDropdown() {
+  const curIdx = airportSelect.value;
+  airportSelect.innerHTML = "";
+  AIRPORTS.forEach((a, i) => {
+    const opt = document.createElement('option');
+    opt.value = i;
+    opt.textContent = a.name;
+    airportSelect.appendChild(opt);
+  });
+  if (curIdx < AIRPORTS.length) airportSelect.value = curIdx;
+}
+updateAirportDropdown();
+
+// Tabs
+const tabBtns = document.querySelectorAll('.tab-btn');
+const infoCards = document.querySelectorAll('.info-card');
+tabBtns.forEach(btn => {
+  btn.addEventListener('click', function() {
+    tabBtns.forEach(b => b.classList.remove('active'));
+    infoCards.forEach(card => card.style.display = 'none');
+    btn.classList.add('active');
+    document.getElementById(btn.dataset.tab).style.display = 'block';
+  });
+});
+
 // Helper: Celsius to Fahrenheit
 function cToF(c) {
   return Math.round((c * 9/5) + 32);
 }
-
-// Helper: pad number
 function pad2(x) {
   return x.toString().padStart(2, "0");
 }
 
-// --------------- WEATHER --------------- //
+// WEATHER
 async function fetchWeather(airport, customLoc) {
   weatherLoading.style.display = "";
   weatherError.textContent = "";
@@ -162,8 +329,6 @@ async function fetchWeather(airport, customLoc) {
   }
   weatherLoading.style.display = "none";
 }
-
-// Open-Meteo code -> human description
 function weatherDesc(code) {
   const descs = {
     0: "Clear sky", 1: "Mainly clear", 2: "Partly cloudy", 3: "Overcast",
@@ -177,20 +342,17 @@ function weatherDesc(code) {
   return descs[code] || "Unknown";
 }
 
-// --------------- METAR/TAF --------------- //
+// METAR/TAF
 async function fetchMetarTaf(airport) {
   metarLoading.style.display = "";
   metarError.textContent = "";
   metarResult.innerHTML = "";
   const icao = airport.icao || airport.iata;
   try {
-    // METAR
     const metarRes = await fetch(`https://avwx.rest/api/metar/${icao}?format=json`);
     const metar = await metarRes.json();
-    // TAF
     const tafRes = await fetch(`https://avwx.rest/api/taf/${icao}?format=json`);
     const taf = await tafRes.json();
-
     let metarStr = metar && metar.sanitized ? `<b>METAR:</b> ${metar.sanitized}<br>` : "<b>METAR:</b> unavailable<br>";
     metarStr += metar && metar.summary ? `<b>Summary:</b> ${metar.summary}<br>` : "";
     let tafStr = taf && taf.sanitized ? `<b>TAF:</b> ${taf.sanitized}<br>` : "<b>TAF:</b> unavailable<br>";
@@ -202,24 +364,20 @@ async function fetchMetarTaf(airport) {
   metarLoading.style.display = "none";
 }
 
-// --------------- SUNRISE/SUNSET & TIME --------------- //
+// SUNRISE/SUNSET & TIME
 async function fetchSunTimes(airport) {
   sunLoading.style.display = "";
   sunError.textContent = "";
   sunResult.innerHTML = "";
   try {
-    // Sunrise/Sunset
     const sunUrl = `https://api.sunrise-sunset.org/json?lat=${airport.lat}&lng=${airport.lon}&formatted=0`;
     const sunRes = await fetch(sunUrl);
     const sunData = await sunRes.json();
     if (!sunData || sunData.status !== "OK") throw new Error("No sun data");
     const sunrise = new Date(sunData.results.sunrise);
     const sunset = new Date(sunData.results.sunset);
-
-    // Local time (from worldtimeapi.org by lat/lon)
     let timeStr = "", tzStr = "";
     try {
-      // Get timezone via GeoNames (username=demo, limited, but works for demo)
       const geoUrl = `https://secure.geonames.org/timezoneJSON?lat=${airport.lat}&lng=${airport.lon}&username=demo`;
       const geoRes = await fetch(geoUrl);
       const geoData = await geoRes.json();
@@ -233,7 +391,6 @@ async function fetchSunTimes(airport) {
       timeStr = pad2(now.getUTCHours()) + ":" + pad2(now.getUTCMinutes()) + " UTC";
       tzStr = "UTC";
     }
-
     sunResult.innerHTML = `
       <b>Local time:</b> ${timeStr} <span style="font-size:.97em;color:#888">(${tzStr})</span><br>
       <b>Sunrise:</b> ${sunrise.toLocaleTimeString([], {hour:"2-digit", minute:"2-digit"})}<br>
@@ -245,10 +402,14 @@ async function fetchSunTimes(airport) {
   sunLoading.style.display = "none";
 }
 
-// --------------- WEBCAM --------------- //
+// WEBCAM
 function setWebcam(airport, customLoc, customRawLink) {
   webcamError.textContent = "";
   webcamLoading.style.display = "none";
+  if (defaultStreamOverride && defaultStreamOverride.length > 0) {
+    webcamFrame.src = defaultStreamOverride;
+    return;
+  }
   if (customRawLink && customRawLink.embedUrl) {
     webcamFrame.src = customRawLink.embedUrl;
     return;
@@ -260,8 +421,6 @@ function setWebcam(airport, customLoc, customRawLink) {
   }
 }
 
-// --------------- RADAR MAP --------------- //
-
 // ----------- WEATHER SEARCH ----------- //
 weatherSearchForm.addEventListener('submit', async (e) => {
   e.preventDefault();
@@ -270,16 +429,13 @@ weatherSearchForm.addEventListener('submit', async (e) => {
   weatherLoading.style.display = "";
   weatherError.textContent = "";
   try {
-    // If query is lat,lon pair
     if (/^-?\d+(\.\d+)?\s*,\s*-?\d+(\.\d+)?$/.test(query)) {
       const [lat, lon] = query.split(',').map(Number);
       customWeatherLoc = { lat, lon, label: `Lat: ${lat}, Lon: ${lon}` };
       fetchWeather(AIRPORTS[airportSelect.value], customWeatherLoc);
       return;
     }
-    // If ICAO or IATA code (4 or 3 letters)
     if (/^[A-Z]{4}$/i.test(query)) {
-      // ICAO
       const match = AIRPORTS.find(a => a.icao.toLowerCase() === query.toLowerCase());
       if (match) {
         customWeatherLoc = { lat: match.lat, lon: match.lon, label: match.name };
@@ -288,7 +444,6 @@ weatherSearchForm.addEventListener('submit', async (e) => {
       }
     }
     if (/^[A-Z]{3}$/i.test(query)) {
-      // IATA
       const match = AIRPORTS.find(a => a.iata.toLowerCase() === query.toLowerCase());
       if (match) {
         customWeatherLoc = { lat: match.lat, lon: match.lon, label: match.name };
@@ -296,7 +451,6 @@ weatherSearchForm.addEventListener('submit', async (e) => {
         return;
       }
     }
-    // City name or other: use Open-Meteo geocoding
     const geoUrl = `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(query)}&count=1&language=en&format=json`;
     const geoRes = await fetch(geoUrl);
     const geoData = await geoRes.json();
@@ -317,7 +471,6 @@ weatherSearchForm.addEventListener('submit', async (e) => {
   }
   weatherLoading.style.display = "none";
 });
-
 resetWeatherBtn.addEventListener('click', () => {
   weatherLocationInput.value = "";
   customWeatherLoc = null;
@@ -333,7 +486,6 @@ webcamSearchForm.addEventListener('submit', async (e) => {
   webcamLoading.style.display = "";
   webcamError.textContent = "";
   try {
-    // ICAO or IATA code logic (try AIRPORTS array first for match)
     let match = AIRPORTS.find(a =>
       a.icao.toLowerCase() === query.toLowerCase() ||
       a.iata.toLowerCase() === query.toLowerCase()
@@ -344,8 +496,6 @@ webcamSearchForm.addEventListener('submit', async (e) => {
       webcamLoading.style.display = "none";
       return;
     }
-    // Otherwise, search YouTube for "Airport [query] live cam"
-    // Fallback for static: Use a prebuilt mapping, or instruct user
     let ytEmbed;
     if (/heathrow|egll/i.test(query)) ytEmbed = "https://www.youtube.com/embed/B8HS5FjvGqk";
     else if (/lax|los angeles/i.test(query)) ytEmbed = "https://www.youtube.com/embed/2IM1Zgk2nAE";
@@ -366,7 +516,6 @@ webcamSearchForm.addEventListener('submit', async (e) => {
     webcamLoading.style.display = "none";
   }
 });
-
 resetWebcamBtn.addEventListener('click', () => {
   webcamLocationInput.value = "";
   customWebcamLoc = null;
@@ -383,39 +532,31 @@ webcamCustomLinkForm.addEventListener('submit', (e) => {
   let embedUrl = null;
   let platform = null;
   if (/youtube\.com\/watch\?v=([a-zA-Z0-9_-]+)/.test(url)) {
-    // YouTube normal link
     const id = url.match(/v=([a-zA-Z0-9_-]+)/)[1];
     embedUrl = `https://www.youtube.com/embed/${id}`;
     platform = "YouTube";
   } else if (/youtu\.be\/([a-zA-Z0-9_-]+)/.test(url)) {
-    // YouTube short link
     const id = url.match(/youtu\.be\/([a-zA-Z0-9_-]+)/)[1];
     embedUrl = `https://www.youtube.com/embed/${id}`;
     platform = "YouTube";
   } else if (/youtube\.com\/embed\/([a-zA-Z0-9_-]+)/.test(url)) {
-    // Already embed
     embedUrl = url;
     platform = "YouTube";
   } else if (/twitch\.tv\/([a-zA-Z0-9_]+)/.test(url)) {
-    // Twitch channel
     const channel = url.match(/twitch\.tv\/([a-zA-Z0-9_]+)/)[1];
     embedUrl = `https://player.twitch.tv/?channel=${channel}&parent=${location.hostname}`;
     platform = "Twitch";
   } else if (/facebook\.com\/.*\/videos\/(\d+)/.test(url)) {
-    // Facebook Live, just show link (embedding is restricted)
     embedUrl = null;
     platform = "Facebook";
   } else if (/vimeo\.com\/(\d+)/.test(url)) {
-    // Vimeo
     const id = url.match(/vimeo\.com\/(\d+)/)[1];
     embedUrl = `https://player.vimeo.com/video/${id}`;
     platform = "Vimeo";
   } else if (/livestream\.com\/accounts\/(\d+)\/events\/(\d+)/.test(url)) {
-    // Livestream.com
     embedUrl = url.replace("livestream.com/", "livestream.com/embed/");
     platform = "Livestream";
   } else {
-    // Generic: try to use as is or show error
     embedUrl = url;
     platform = "Custom";
   }
@@ -423,11 +564,10 @@ webcamCustomLinkForm.addEventListener('submit', (e) => {
     customWebcamRawLink = { url, embedUrl, platform, label: url };
     setWebcam(AIRPORTS[airportSelect.value], null, customWebcamRawLink);
   } else {
-    webcamError.textContent = `Cannot embed this livestream directly. Please open in a new tab: <a href="${url}" target="_blank">${url}</a>`;
+    webcamError.innerHTML = `Cannot embed this livestream directly. Please open in a new tab: <a href="${url}" target="_blank">${url}</a>`;
     webcamFrame.src = "";
   }
 });
-
 resetCustomLinkBtn.addEventListener('click', () => {
   webcamCustomLinkInput.value = "";
   customWebcamRawLink = null;
@@ -440,9 +580,8 @@ function refreshAll(airport) {
   fetchWeather(airport, customWeatherLoc);
   fetchMetarTaf(airport);
   fetchSunTimes(airport);
+  updateAnnouncementBar();
 }
-
-// Handle airport dropdown change
 airportSelect.addEventListener('change', () => {
   customWeatherLoc = null;
   customWebcamLoc = null;
@@ -462,9 +601,7 @@ function setDisplayMode(mode) {
     document.body.classList.add('display-monitor');
   }
 }
-// Default to monitor
 setDisplayMode('monitor');
-
 displayModeSelect.addEventListener('change', () => {
   setDisplayMode(displayModeSelect.value);
 });
