@@ -80,10 +80,29 @@ if (!Array.isArray(AIRPORTS) || AIRPORTS.length === 0) {
   }
 }
 
+// ---- Load defaultStreamOverride from localStorage if available ----
+if (typeof localStorage !== 'undefined') {
+  const savedDefaultStream = localStorage.getItem('defaultStreamOverride');
+  if (savedDefaultStream !== null) {
+    defaultStreamOverride = savedDefaultStream;
+  }
+}
+
 // Utility: Save AIRPORTS to localStorage
 function saveAirportsToStorage() {
   if (typeof localStorage !== 'undefined') {
     localStorage.setItem('AIRPORTS', JSON.stringify(AIRPORTS));
+  }
+}
+
+// Utility: Save defaultStreamOverride to localStorage
+function saveDefaultStreamToStorage() {
+  if (typeof localStorage !== 'undefined') {
+    if (defaultStreamOverride && defaultStreamOverride.length > 0) {
+      localStorage.setItem('defaultStreamOverride', defaultStreamOverride);
+    } else {
+      localStorage.removeItem('defaultStreamOverride');
+    }
   }
 }
 
@@ -221,6 +240,8 @@ adminAnnouncementSetBtn.onclick = () => {
   updateAnnouncementBar();
   if (typeof localStorage !== 'undefined') {
     localStorage.setItem('announcementText', announcementText);
+    // Real-time sync
+    localStorage.setItem('sync_announcementText', Date.now());
   }
 };
 adminAnnouncementClearBtn.onclick = () => {
@@ -229,6 +250,8 @@ adminAnnouncementClearBtn.onclick = () => {
   updateAnnouncementBar();
   if (typeof localStorage !== 'undefined') {
     localStorage.removeItem('announcementText');
+    // Real-time sync
+    localStorage.setItem('sync_announcementText', Date.now());
   }
 };
 
@@ -247,6 +270,8 @@ function renderAdminAirportTable() {
         if (inputHandler) inp.onchange = (ev) => {
           inputHandler(inp.value);
           saveAirportsToStorage();
+          // Real-time sync
+          localStorage.setItem('sync_AIRPORTS', Date.now());
         };
         td.appendChild(inp);
       } else {
@@ -269,6 +294,8 @@ function renderAdminAirportTable() {
       renderAdminAirportTable();
       updateAirportDropdown();
       saveAirportsToStorage();
+      // Real-time sync
+      localStorage.setItem('sync_AIRPORTS', Date.now());
     };
     tdRemove.appendChild(btnRemove);
     tr.appendChild(tdRemove);
@@ -291,16 +318,28 @@ adminAddAirportBtn.onclick = () => {
   renderAdminAirportTable();
   updateAirportDropdown();
   saveAirportsToStorage();
+  // Real-time sync
+  localStorage.setItem('sync_AIRPORTS', Date.now());
 };
 
 // --- Default Stream (Admin) ---
 adminDefaultStreamSetBtn.onclick = () => {
   defaultStreamOverride = adminDefaultStreamInput.value.trim();
+  saveDefaultStreamToStorage();
+  // Real-time sync
+  if (typeof localStorage !== 'undefined') {
+    localStorage.setItem('sync_defaultStreamOverride', Date.now());
+  }
   refreshAll(AIRPORTS[airportSelect.value]);
 };
 adminDefaultStreamClearBtn.onclick = () => {
   defaultStreamOverride = null;
   adminDefaultStreamInput.value = "";
+  saveDefaultStreamToStorage();
+  // Real-time sync
+  if (typeof localStorage !== 'undefined') {
+    localStorage.setItem('sync_defaultStreamOverride', Date.now());
+  }
   refreshAll(AIRPORTS[airportSelect.value]);
 };
 
@@ -648,6 +687,34 @@ function setDisplayMode(mode) {
 setDisplayMode('monitor');
 displayModeSelect.addEventListener('change', () => {
   setDisplayMode(displayModeSelect.value);
+});
+
+// ----------- REAL-TIME SYNC ACROSS TABS (ALL SETTINGS) -----------
+window.addEventListener('storage', function(event) {
+  // AIRPORTS Table
+  if (event.key === 'AIRPORTS' || event.key === 'sync_AIRPORTS') {
+    try {
+      const updatedAirports = JSON.parse(localStorage.getItem('AIRPORTS'));
+      if (Array.isArray(updatedAirports)) {
+        AIRPORTS = updatedAirports;
+        updateAirportDropdown();
+        renderAdminAirportTable();
+        refreshAll(AIRPORTS[airportSelect.value] || AIRPORTS[0]);
+      }
+    } catch (e) {}
+  }
+  // Announcement
+  if (event.key === 'announcementText' || event.key === 'sync_announcementText') {
+    announcementText = localStorage.getItem('announcementText') || "";
+    updateAnnouncementBar();
+    if (isAdmin) adminAnnouncementInput.value = announcementText;
+  }
+  // Default Stream
+  if (event.key === 'defaultStreamOverride' || event.key === 'sync_defaultStreamOverride') {
+    defaultStreamOverride = localStorage.getItem('defaultStreamOverride') || null;
+    if (isAdmin) adminDefaultStreamInput.value = defaultStreamOverride || "";
+    refreshAll(AIRPORTS[airportSelect.value] || AIRPORTS[0]);
+  }
 });
 
 // Initial load
