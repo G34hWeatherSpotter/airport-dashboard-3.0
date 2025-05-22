@@ -1,7 +1,7 @@
 // =================== ADMIN PANEL STATE ===================
 let isAdmin = false;
-const ADMIN_PASSWORD = "admin123"; // <-- Change this password if needed
-let defaultStreamOverride = null; // If set, overrides airport webcam for everyone
+const ADMIN_PASSWORD = "admin123";
+let defaultStreamOverride = null;
 let announcementText = "";
 
 // ---- Load announcement from localStorage if available ----
@@ -20,7 +20,7 @@ if (typeof localStorage !== 'undefined') {
     try {
       AIRPORTS = JSON.parse(savedAirports);
     } catch (e) {
-      AIRPORTS = []; // fallback in case of bad JSON
+      AIRPORTS = [];
     }
   }
 }
@@ -106,6 +106,12 @@ function saveDefaultStreamToStorage() {
   }
 }
 
+// --- Real-Time Sync Helper ---
+// Use a timestamp key to force "storage" event even if value is unchanged
+function triggerSync(key) {
+  localStorage.setItem(`__sync_${key}`, Date.now());
+}
+
 const webcamFrame = document.getElementById('webcam-frame');
 const radarFrame = document.getElementById('radar-frame');
 const weatherResult = document.getElementById('weather-result');
@@ -171,11 +177,10 @@ const adminDefaultStreamInput = document.getElementById('admin-default-stream-in
 const adminDefaultStreamSetBtn = document.getElementById('admin-default-stream-set');
 const adminDefaultStreamClearBtn = document.getElementById('admin-default-stream-clear');
 
-let customWeatherLoc = null; // {lat, lon, label}
-let customWebcamLoc = null; // {query, label, youtubeEmbedUrl}
-let customWebcamRawLink = null; // {url, embedUrl, label, platform}
+let customWeatherLoc = null;
+let customWebcamLoc = null;
+let customWebcamRawLink = null;
 
-// Weather icons for Open-Meteo codes
 const weatherIcons = {
   0: "☀️", 1: "🌤️", 2: "⛅", 3: "☁️",
   45: "🌫️", 48: "🌫️", 51: "🌦️", 53: "🌦️", 55: "🌦️",
@@ -224,7 +229,6 @@ adminLoginForm.onsubmit = (e) => {
   }
 };
 
-// --- Announcement Bar (Admin) ---
 function updateAnnouncementBar() {
   if (announcementText && announcementText.trim().length > 0) {
     announcementBar.textContent = announcementText;
@@ -240,8 +244,7 @@ adminAnnouncementSetBtn.onclick = () => {
   updateAnnouncementBar();
   if (typeof localStorage !== 'undefined') {
     localStorage.setItem('announcementText', announcementText);
-    // Real-time sync
-    localStorage.setItem('sync_announcementText', Date.now());
+    triggerSync('announcementText');
   }
 };
 adminAnnouncementClearBtn.onclick = () => {
@@ -250,12 +253,10 @@ adminAnnouncementClearBtn.onclick = () => {
   updateAnnouncementBar();
   if (typeof localStorage !== 'undefined') {
     localStorage.removeItem('announcementText');
-    // Real-time sync
-    localStorage.setItem('sync_announcementText', Date.now());
+    triggerSync('announcementText');
   }
 };
 
-// --- Airport/Webcam Table (Admin) ---
 function renderAdminAirportTable() {
   adminAirportTable.innerHTML = "";
   AIRPORTS.forEach((a, idx) => {
@@ -270,8 +271,7 @@ function renderAdminAirportTable() {
         if (inputHandler) inp.onchange = (ev) => {
           inputHandler(inp.value);
           saveAirportsToStorage();
-          // Real-time sync
-          localStorage.setItem('sync_AIRPORTS', Date.now());
+          triggerSync('AIRPORTS');
         };
         td.appendChild(inp);
       } else {
@@ -279,7 +279,6 @@ function renderAdminAirportTable() {
       }
       return td;
     }
-    // Name, ICAO, IATA, Lat, Lon, Webcam, Remove
     tr.appendChild(makeCell(a.name, "text", a.name, "11em", v => { a.name = v; updateAirportDropdown(); }));
     tr.appendChild(makeCell(a.icao, "text", a.icao, "5em", v => { a.icao = v; updateAirportDropdown(); }));
     tr.appendChild(makeCell(a.iata, "text", a.iata, "5em", v => { a.iata = v; updateAirportDropdown(); }));
@@ -294,8 +293,7 @@ function renderAdminAirportTable() {
       renderAdminAirportTable();
       updateAirportDropdown();
       saveAirportsToStorage();
-      // Real-time sync
-      localStorage.setItem('sync_AIRPORTS', Date.now());
+      triggerSync('AIRPORTS');
     };
     tdRemove.appendChild(btnRemove);
     tr.appendChild(tdRemove);
@@ -318,28 +316,21 @@ adminAddAirportBtn.onclick = () => {
   renderAdminAirportTable();
   updateAirportDropdown();
   saveAirportsToStorage();
-  // Real-time sync
-  localStorage.setItem('sync_AIRPORTS', Date.now());
+  triggerSync('AIRPORTS');
 };
 
 // --- Default Stream (Admin) ---
 adminDefaultStreamSetBtn.onclick = () => {
   defaultStreamOverride = adminDefaultStreamInput.value.trim();
   saveDefaultStreamToStorage();
-  // Real-time sync
-  if (typeof localStorage !== 'undefined') {
-    localStorage.setItem('sync_defaultStreamOverride', Date.now());
-  }
+  triggerSync('defaultStreamOverride');
   refreshAll(AIRPORTS[airportSelect.value]);
 };
 adminDefaultStreamClearBtn.onclick = () => {
   defaultStreamOverride = null;
   adminDefaultStreamInput.value = "";
   saveDefaultStreamToStorage();
-  // Real-time sync
-  if (typeof localStorage !== 'undefined') {
-    localStorage.setItem('sync_defaultStreamOverride', Date.now());
-  }
+  triggerSync('defaultStreamOverride');
   refreshAll(AIRPORTS[airportSelect.value]);
 };
 
@@ -370,7 +361,6 @@ tabBtns.forEach(btn => {
   });
 });
 
-// Helper: Celsius to Fahrenheit
 function cToF(c) {
   return Math.round((c * 9/5) + 32);
 }
@@ -378,7 +368,6 @@ function pad2(x) {
   return x.toString().padStart(2, "0");
 }
 
-// WEATHER
 async function fetchWeather(airport, customLoc) {
   weatherLoading.style.display = "";
   weatherError.textContent = "";
@@ -425,7 +414,6 @@ function weatherDesc(code) {
   return descs[code] || "Unknown";
 }
 
-// METAR/TAF
 async function fetchMetarTaf(airport) {
   metarLoading.style.display = "";
   metarError.textContent = "";
@@ -447,7 +435,6 @@ async function fetchMetarTaf(airport) {
   metarLoading.style.display = "none";
 }
 
-// SUNRISE/SUNSET & TIME
 async function fetchSunTimes(airport) {
   sunLoading.style.display = "";
   sunError.textContent = "";
@@ -485,7 +472,6 @@ async function fetchSunTimes(airport) {
   sunLoading.style.display = "none";
 }
 
-// WEBCAM
 function setWebcam(airport, customLoc, customRawLink) {
   webcamError.textContent = "";
   webcamLoading.style.display = "none";
@@ -504,7 +490,6 @@ function setWebcam(airport, customLoc, customRawLink) {
   }
 }
 
-// ----------- WEATHER SEARCH ----------- //
 weatherSearchForm.addEventListener('submit', async (e) => {
   e.preventDefault();
   const query = weatherLocationInput.value.trim();
@@ -560,7 +545,6 @@ resetWeatherBtn.addEventListener('click', () => {
   fetchWeather(AIRPORTS[airportSelect.value]);
 });
 
-// ----------- WEBCAM SEARCH ----------- //
 webcamSearchForm.addEventListener('submit', async (e) => {
   e.preventDefault();
   customWebcamRawLink = null;
@@ -606,7 +590,6 @@ resetWebcamBtn.addEventListener('click', () => {
   setWebcam(AIRPORTS[airportSelect.value]);
 });
 
-// ----------- WEBCAM CUSTOM LINK ----------- //
 webcamCustomLinkForm.addEventListener('submit', (e) => {
   e.preventDefault();
   const url = webcamCustomLinkInput.value.trim();
@@ -657,7 +640,6 @@ resetCustomLinkBtn.addEventListener('click', () => {
   setWebcam(AIRPORTS[airportSelect.value], customWebcamLoc, null);
 });
 
-// --------------- REFRESH ALL --------------- //
 function refreshAll(airport) {
   setWebcam(airport, customWebcamLoc, customWebcamRawLink);
   fetchWeather(airport, customWeatherLoc);
@@ -675,7 +657,6 @@ airportSelect.addEventListener('change', () => {
   refreshAll(AIRPORTS[airportSelect.value]);
 });
 
-// ----------- DISPLAY MODE SWITCHING -----------
 function setDisplayMode(mode) {
   document.body.classList.remove('display-monitor', 'display-tv');
   if (mode === 'tv') {
@@ -689,10 +670,10 @@ displayModeSelect.addEventListener('change', () => {
   setDisplayMode(displayModeSelect.value);
 });
 
-// ----------- REAL-TIME SYNC ACROSS TABS (ALL SETTINGS) -----------
+// ----------- REAL-TIME SYNC ACROSS TABS -----------
 window.addEventListener('storage', function(event) {
   // AIRPORTS Table
-  if (event.key === 'AIRPORTS' || event.key === 'sync_AIRPORTS') {
+  if (event.key === 'AIRPORTS' || event.key === '__sync_AIRPORTS') {
     try {
       const updatedAirports = JSON.parse(localStorage.getItem('AIRPORTS'));
       if (Array.isArray(updatedAirports)) {
@@ -704,13 +685,13 @@ window.addEventListener('storage', function(event) {
     } catch (e) {}
   }
   // Announcement
-  if (event.key === 'announcementText' || event.key === 'sync_announcementText') {
+  if (event.key === 'announcementText' || event.key === '__sync_announcementText') {
     announcementText = localStorage.getItem('announcementText') || "";
     updateAnnouncementBar();
     if (isAdmin) adminAnnouncementInput.value = announcementText;
   }
   // Default Stream
-  if (event.key === 'defaultStreamOverride' || event.key === 'sync_defaultStreamOverride') {
+  if (event.key === 'defaultStreamOverride' || event.key === '__sync_defaultStreamOverride') {
     defaultStreamOverride = localStorage.getItem('defaultStreamOverride') || null;
     if (isAdmin) adminDefaultStreamInput.value = defaultStreamOverride || "";
     refreshAll(AIRPORTS[airportSelect.value] || AIRPORTS[0]);
