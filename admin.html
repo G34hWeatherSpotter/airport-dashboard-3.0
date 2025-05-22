@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Airport Dashboard Admin Panel</title>
+  <style>
+    body { font-family: sans-serif; max-width: 600px; margin: 2em auto; }
+    #editPanel { margin-top: 2em; }
+    label { display: block; margin-top: 1.5em; }
+    textarea { width: 100%; min-height: 120px; }
+    button { margin-top: 1em; font-size: 1em; }
+    #status { margin-top: 1em; }
+    #tokenInput { width: 100%; margin-top: 0.5em; }
+    .info { color: #333; font-size: 0.95em; }
+    .success { color: green; }
+    .error { color: red; }
+  </style>
+</head>
+<body>
+  <h1>Airport Dashboard Admin Panel</h1>
+  <div id="loginPanel">
+    <button id="loginBtn">Login with GitHub</button>
+    <div class="info">
+      <p>After logging in, you’ll be redirected to <code>callback.html</code>. Paste your GitHub access token here for now:</p>
+      <input id="tokenInput" type="text" placeholder="Paste GitHub access token here">
+      <button id="useTokenBtn">Use Token</button>
+    </div>
+  </div>
+
+  <div id="editPanel" style="display:none;">
+    <h2>Edit Announcement</h2>
+    <textarea id="announcement"></textarea>
+    <button id="saveBtn">Save to GitHub</button>
+    <div id="status"></div>
+  </div>
+
+  <script>
+    // CONFIG -- fill these in:
+    const client_id = "Ov23liA3BS5NEMdn4CZd"; // <-- Fill from your GitHub OAuth App
+    const redirect_uri = "https://G34hWeatherSpotter.github.io/airport-dashboard-3.0/callback.html";
+    const owner = "G34hWeatherSpotter";
+    const repo = "airport-dashboard-3.0";
+    const branch = "main";
+    const announcementPath = "announcement.txt"; // You can change this to any file path
+
+    // Step 1: Login with GitHub
+    document.getElementById('loginBtn').onclick = function() {
+      const scope = "repo";
+      window.location.href =
+        `https://github.com/login/oauth/authorize?client_id=${client_id}&redirect_uri=${encodeURIComponent(redirect_uri)}&scope=${scope}`;
+    };
+
+    // Step 2: For now, let user paste access token
+    let accessToken = "";
+
+    document.getElementById('useTokenBtn').onclick = function() {
+      accessToken = document.getElementById('tokenInput').value.trim();
+      if (!accessToken) {
+        alert("Please paste your GitHub access token.");
+        return;
+      }
+      loadAnnouncement();
+      document.getElementById('editPanel').style.display = "";
+      document.getElementById('loginPanel').style.display = "none";
+    };
+
+    // Load the current announcement.txt
+    async function loadAnnouncement() {
+      const statusDiv = document.getElementById('status');
+      statusDiv.textContent = "Loading current announcement...";
+      try {
+        const res = await fetch(
+          `https://api.github.com/repos/${owner}/${repo}/contents/${announcementPath}?ref=${branch}`,
+          { headers: { Authorization: `token ${accessToken}` } }
+        );
+        const data = await res.json();
+        if (data.content) {
+          const content = atob(data.content.replace(/\n/g, ""));
+          document.getElementById('announcement').value = content;
+          statusDiv.textContent = "Loaded current announcement.";
+        } else {
+          statusDiv.innerHTML = '<span class="error">Could not load content: ' + (data.message || "Unknown error") + '</span>';
+        }
+      } catch (err) {
+        statusDiv.innerHTML = '<span class="error">Error loading content: ' + err + '</span>';
+      }
+    }
+
+    // Save updated announcement.txt
+    document.getElementById('saveBtn').onclick = async function() {
+      const newContent = document.getElementById('announcement').value;
+      const statusDiv = document.getElementById('status');
+      statusDiv.textContent = "Saving...";
+
+      try {
+        // Get SHA for the file
+        const getRes = await fetch(
+          `https://api.github.com/repos/${owner}/${repo}/contents/${announcementPath}?ref=${branch}`,
+          { headers: { Authorization: `token ${accessToken}` } }
+        );
+        const fileData = await getRes.json();
+        const sha = fileData.sha;
+
+        // Update file
+        const body = {
+          message: "Update announcement via admin panel",
+          content: btoa(unescape(encodeURIComponent(newContent))),
+          branch: branch,
+          sha,
+        };
+
+        const res = await fetch(
+          `https://api.github.com/repos/${owner}/${repo}/contents/${announcementPath}`,
+          {
+            method: "PUT",
+            headers: {
+              Authorization: `token ${accessToken}`,
+              "Content-Type": "application/json"
+            },
+            body: JSON.stringify(body)
+          }
+        );
+        const result = await res.json();
+        if (result.content) {
+          statusDiv.innerHTML = '<span class="success">Announcement updated!</span>';
+        } else {
+          statusDiv.innerHTML = '<span class="error">Error updating: ' + (result.message || "Unknown error") + '</span>';
+        }
+      } catch (err) {
+        statusDiv.innerHTML = '<span class="error">Error: ' + err + '</span>';
+      }
+    };
+  </script>
+</body>
+</html>
