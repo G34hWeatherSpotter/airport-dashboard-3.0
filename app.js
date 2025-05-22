@@ -6,63 +6,86 @@ let announcementText = "";
 
 // ---- Load announcement from localStorage if available ----
 if (typeof localStorage !== 'undefined') {
-  const saved = localStorage.getItem('announcementText');
-  if (saved !== null) {
-    announcementText = saved;
+  const savedAnnouncement = localStorage.getItem('announcementText');
+  if (savedAnnouncement !== null) {
+    announcementText = savedAnnouncement;
   }
 }
 
-// ========== AIRPORT DATA ========== //
-let AIRPORTS = [
-  {
-    name: "London Heathrow (EGLL)",
-    icao: "EGLL",
-    iata: "LHR",
-    lat: 51.4706,
-    lon: -0.4619,
-    webcam: "https://www.youtube.com/embed/B8HS5FjvGqk"
-  },
-  {
-    name: "Los Angeles Intl (KLAX)",
-    icao: "KLAX",
-    iata: "LAX",
-    lat: 33.9416,
-    lon: -118.4085,
-    webcam: "https://www.youtube.com/embed/2IM1Zgk2nAE"
-  },
-  {
-    name: "Frankfurt (EDDF)",
-    icao: "EDDF",
-    iata: "FRA",
-    lat: 50.0379,
-    lon: 8.5622,
-    webcam: "https://www.youtube.com/embed/4j7I4K9Xc0g"
-  },
-  {
-    name: "Amsterdam Schiphol (EHAM)",
-    icao: "EHAM",
-    iata: "AMS",
-    lat: 52.3105,
-    lon: 4.7683,
-    webcam: "https://www.youtube.com/embed/7xkJ-2ZC4mA"
-  },
-  {
-    name: "Tokyo Haneda (RJTT)",
-    icao: "RJTT",
-    iata: "HND",
-    lat: 35.5494,
-    lon: 139.7798,
-    webcam: "https://www.youtube.com/embed/NyD2A3nav7A"
-  },
-  {
-    name: "Sydney Kingsford Smith (YSSY)",
-    icao: "YSSY",
-    iata: "SYD",
-    lat: -33.9399,
-    lon: 151.1753,
-    webcam: "https://www.youtube.com/embed/iQ4bR9F5s-Y"
+// ---- Load AIRPORTS from localStorage if available ----
+let AIRPORTS = [];
+if (typeof localStorage !== 'undefined') {
+  const savedAirports = localStorage.getItem('AIRPORTS');
+  if (savedAirports !== null) {
+    try {
+      AIRPORTS = JSON.parse(savedAirports);
+    } catch (e) {
+      AIRPORTS = []; // fallback in case of bad JSON
+    }
   }
-];
+}
+if (!Array.isArray(AIRPORTS) || AIRPORTS.length === 0) {
+  AIRPORTS = [
+    {
+      name: "London Heathrow (EGLL)",
+      icao: "EGLL",
+      iata: "LHR",
+      lat: 51.4706,
+      lon: -0.4619,
+      webcam: "https://www.youtube.com/embed/B8HS5FjvGqk"
+    },
+    {
+      name: "Los Angeles Intl (KLAX)",
+      icao: "KLAX",
+      iata: "LAX",
+      lat: 33.9416,
+      lon: -118.4085,
+      webcam: "https://www.youtube.com/embed/2IM1Zgk2nAE"
+    },
+    {
+      name: "Frankfurt (EDDF)",
+      icao: "EDDF",
+      iata: "FRA",
+      lat: 50.0379,
+      lon: 8.5622,
+      webcam: "https://www.youtube.com/embed/4j7I4K9Xc0g"
+    },
+    {
+      name: "Amsterdam Schiphol (EHAM)",
+      icao: "EHAM",
+      iata: "AMS",
+      lat: 52.3105,
+      lon: 4.7683,
+      webcam: "https://www.youtube.com/embed/7xkJ-2ZC4mA"
+    },
+    {
+      name: "Tokyo Haneda (RJTT)",
+      icao: "RJTT",
+      iata: "HND",
+      lat: 35.5494,
+      lon: 139.7798,
+      webcam: "https://www.youtube.com/embed/NyD2A3nav7A"
+    },
+    {
+      name: "Sydney Kingsford Smith (YSSY)",
+      icao: "YSSY",
+      iata: "SYD",
+      lat: -33.9399,
+      lon: 151.1753,
+      webcam: "https://www.youtube.com/embed/iQ4bR9F5s-Y"
+    }
+  ];
+  if (typeof localStorage !== 'undefined') {
+    localStorage.setItem('AIRPORTS', JSON.stringify(AIRPORTS));
+  }
+}
+
+// Utility: Save AIRPORTS to localStorage
+function saveAirportsToStorage() {
+  if (typeof localStorage !== 'undefined') {
+    localStorage.setItem('AIRPORTS', JSON.stringify(AIRPORTS));
+  }
+}
 
 const webcamFrame = document.getElementById('webcam-frame');
 const radarFrame = document.getElementById('radar-frame');
@@ -221,7 +244,10 @@ function renderAdminAirportTable() {
         inp.type = type;
         inp.value = text;
         inp.style.width = width;
-        if (inputHandler) inp.onchange = (ev) => inputHandler(inp.value);
+        if (inputHandler) inp.onchange = (ev) => {
+          inputHandler(inp.value);
+          saveAirportsToStorage();
+        };
         td.appendChild(inp);
       } else {
         td.textContent = text;
@@ -242,6 +268,7 @@ function renderAdminAirportTable() {
       AIRPORTS.splice(idx, 1);
       renderAdminAirportTable();
       updateAirportDropdown();
+      saveAirportsToStorage();
     };
     tdRemove.appendChild(btnRemove);
     tr.appendChild(tdRemove);
@@ -263,6 +290,7 @@ adminAddAirportBtn.onclick = () => {
   adminNewName.value = adminNewIcao.value = adminNewIata.value = adminNewLat.value = adminNewLon.value = adminNewWebcam.value = "";
   renderAdminAirportTable();
   updateAirportDropdown();
+  saveAirportsToStorage();
 };
 
 // --- Default Stream (Admin) ---
