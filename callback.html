@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>GitHub OAuth Callback</title>
+  <style>
+    body { font-family: sans-serif; max-width: 600px; margin: 2em auto; }
+    #result { background: #f8f8f8; padding: 1em; border-radius: 6px; }
+    .success { color: green; }
+    .error { color: red; }
+    pre { background: #222; color: #fff; padding: 0.5em; border-radius: 4px; }
+  </style>
+</head>
+<body>
+  <h1>GitHub OAuth Callback</h1>
+  <div id="result"></div>
+  <script>
+    function getQueryParams() {
+      const params = {};
+      window.location.search.replace(/[?&]+([^=&]+)=([^&]*)/gi, function(m,key,value) {
+        params[key] = decodeURIComponent(value);
+      });
+      return params;
+    }
+
+    const params = getQueryParams();
+    const resultDiv = document.getElementById('result');
+
+    if (params.code) {
+      resultDiv.innerHTML = `
+        <p class="success"><strong>Success!</strong> OAuth code received:</p>
+        <pre>${params.code}</pre>
+        <p>
+          <em>
+            Next step: send this code to your backend to exchange it for an access token.
+          </em>
+        </p>
+      `;
+      // Example: send code to backend for token exchange (uncomment and set your endpoint)
+      /*
+      fetch('https://your-backend.example.com/github-oauth', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code: params.code })
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (data.access_token) {
+          resultDiv.innerHTML += `
+            <hr>
+            <p class="success">Access token received!</p>
+            <pre>${data.access_token}</pre>
+          `;
+        } else {
+          resultDiv.innerHTML += '<p class="error">Failed to get access token.</p>';
+        }
+      })
+      .catch(err => {
+        resultDiv.innerHTML += '<p class="error">Error: ' + err + '</p>';
+      });
+      */
+    } else if (params.error) {
+      resultDiv.innerHTML = `<p class="error">Error: ${params.error}</p>`;
+    } else {
+      resultDiv.innerHTML = `<p>No OAuth code found in the URL.</p>`;
+    }
+  </script>
+</body>
+</html>
