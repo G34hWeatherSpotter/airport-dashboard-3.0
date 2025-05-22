@@ -4,6 +4,14 @@ const ADMIN_PASSWORD = "admin123"; // <-- Change this password if needed
 let defaultStreamOverride = null; // If set, overrides airport webcam for everyone
 let announcementText = "";
 
+// ---- Load announcement from localStorage if available ----
+if (typeof localStorage !== 'undefined') {
+  const saved = localStorage.getItem('announcementText');
+  if (saved !== null) {
+    announcementText = saved;
+  }
+}
+
 // ========== AIRPORT DATA ========== //
 let AIRPORTS = [
   {
@@ -183,14 +191,22 @@ function updateAnnouncementBar() {
     announcementBar.style.display = "none";
   }
 }
+
+// ---- SAVE/CLEAR announcement to localStorage ----
 adminAnnouncementSetBtn.onclick = () => {
   announcementText = adminAnnouncementInput.value.trim();
   updateAnnouncementBar();
+  if (typeof localStorage !== 'undefined') {
+    localStorage.setItem('announcementText', announcementText);
+  }
 };
 adminAnnouncementClearBtn.onclick = () => {
   announcementText = "";
   adminAnnouncementInput.value = "";
   updateAnnouncementBar();
+  if (typeof localStorage !== 'undefined') {
+    localStorage.removeItem('announcementText');
+  }
 };
 
 // --- Airport/Webcam Table (Admin) ---
