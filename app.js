@@ -1,7 +1,8 @@
 // =================== ADMIN PANEL STATE ===================
 let isAdmin = false;
 const ADMIN_PASSWORD = "admin123";
-let defaultStreamOverride = null;
+// Set defaultStreamOverride to your YouTube stream (using /embed/ format)
+let defaultStreamOverride = "https://www.youtube.com/embed/XF6YDqccSsg";
 let announcementText = "";
 
 // ---- Load announcement from localStorage if available ----
@@ -355,7 +356,7 @@ const infoCards = document.querySelectorAll('.info-card');
 tabBtns.forEach(btn => {
   btn.addEventListener('click', function() {
     tabBtns.forEach(b => b.classList.remove('active'));
-    infoCards.forEach(card => card.style.display = 'none');
+    infoCards.forEach(card => card.style.display = 'none';
     btn.classList.add('active');
     document.getElementById(btn.dataset.tab).style.display = 'block';
   });
