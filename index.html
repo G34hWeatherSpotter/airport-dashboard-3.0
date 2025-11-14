@@ -1,53 +1,77 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <title>Airport Dashboard Real-time Sync (Firebase)</title>
-  <style>
-    body { font-family: sans-serif; margin: 2em; }
-    #output { font-size: 1.15em; margin: 1em 0; }
-    input[type="text"] { width: 70%; }
-    button { font-size: 1em; }
-  </style>
-</head>
-<body>
-  <h2>Firebase Real-Time Sync Demo</h2>
-  <div>
-    <input type="text" id="msgInput" placeholder="Type a message..." />
-    <button id="sendBtn">Send</button>
+@@ -28,7 +28,12 @@ <h1>Airport Dashboard 3.0</h1>
+          🐞 Submit an Issue or Suggestion
+        </a>
+      </div>
+      <button id="admin-login-btn" class="admin-btn">Admin Login</button>
+      <button id="admin-logout-btn" class="admin-btn" style="display:none;">Admin Logout</button>
+    </header>
+
+    <div id="announcement-bar" class="announcement-bar" style="display:none;"></div>
+
+    <main class="main-area">
+      <div class="main-large-tiles">
+        <section class="dashboard-card main-tile" id="radar-card">
+@@ -90,8 +95,63 @@ <h2>Sunrise, Sunset &amp; Local Time</h2>
+          <div id="sun-result"></div>
+        </section>
+      </div>
+      
+      <!-- Admin Panel -->
+      <section id="admin-panel" class="dashboard-card" style="display:none; margin-top:1.5em; background:#fffbe7;">
+        <h2>Admin Panel</h2>
+        <div class="admin-section">
+          <h3>Announcement Bar</h3>
+          <input type="text" id="admin-announcement-input" placeholder="Announcement text..." style="width:80%">
+          <button id="admin-announcement-set">Set Announcement</button>
+          <button id="admin-announcement-clear">Clear</button>
+        </div>
+        <hr>
+        <div class="admin-section">
+          <h3>Edit Airports &amp; Webcams</h3>
+          <table id="admin-airport-table">
+            <thead><tr>
+              <th>Name</th>
+              <th>ICAO</th>
+              <th>IATA</th>
+              <th>Latitude</th>
+              <th>Longitude</th>
+              <th>Webcam Embed URL</th>
+              <th>Remove</th>
+            </tr></thead>
+            <tbody></tbody>
+          </table>
+          <div style="margin-top:0.5em;">
+            <input type="text" id="admin-new-name" placeholder="New Name" style="width:18%">
+            <input type="text" id="admin-new-icao" placeholder="ICAO" style="width:8%">
+            <input type="text" id="admin-new-iata" placeholder="IATA" style="width:8%">
+            <input type="number" id="admin-new-lat" placeholder="Lat" style="width:10%">
+            <input type="number" id="admin-new-lon" placeholder="Lon" style="width:10%">
+            <input type="text" id="admin-new-webcam" placeholder="Webcam Embed URL" style="width:23%">
+            <button id="admin-add-airport">Add Airport</button>
+          </div>
+        </div>
+        <hr>
+        <div class="admin-section">
+          <h3>Set Default Stream</h3>
+          <input type="text" id="admin-default-stream-input" placeholder="Paste livestream embed URL (YouTube, Twitch...)">
+          <button id="admin-default-stream-set">Set Stream as Default</button>
+          <button id="admin-default-stream-clear">Clear</button>
+        </div>
+      </section>
+      <!-- End Admin Panel -->
+    </main>
   </div>
-  <div id="output">(No message set)</div>
-  <div style="color:#888;font-size:0.95em;">Open this page in multiple browsers/devices. All will sync instantly!</div>
-  <!-- Firebase SDKs -->
-  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
-  <script>
-    // Replace with your Firebase project config!
-    const firebaseConfig = {
-      apiKey: "YOUR_API_KEY",
-      authDomain: "airport-dashboard-861d3.firebaseapp.com",
-      databaseURL: "https://airport-dashboard-861d3-default-rtdb.firebaseio.com",
-      projectId: "airport-dashboard-861d3",
-      storageBucket: "airport-dashboard-861d3.appspot.com",
-      messagingSenderId: "YOUR_SENDER_ID",
-      appId: "YOUR_APP_ID"
-    };
-
-    // Initialize Firebase
-    firebase.initializeApp(firebaseConfig);
-    const db = firebase.database();
-
-    // Listen for changes (real-time!)
-    db.ref("sharedMessage").on("value", snap => {
-      document.getElementById("output").textContent = snap.val() || "(No message set)";
-    });
-
-    // Send new message
-    document.getElementById("sendBtn").onclick = () => {
-      const msg = document.getElementById("msgInput").value;
-      db.ref("sharedMessage").set(msg);
-      document.getElementById("msgInput").value = "";
-    };
-  </script>
+  <div id="admin-login-modal" class="modal" style="display:none;">
+    <div class="modal-content">
+      <span id="admin-modal-close" class="modal-close">&times;</span>
+      <h2>Admin Login</h2>
+      <form id="admin-login-form">
+        <input type="password" id="admin-password-input" placeholder="Enter admin password">
+        <button type="submit">Login</button>
+      </form>
+      <div id="admin-login-error" style="color:red; margin-top:0.5em;"></div>
+    </div>
+  </div>
+  <script src="app.js"></script>
 </body>
 </html>
